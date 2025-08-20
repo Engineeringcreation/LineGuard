@@ -19,6 +19,7 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            touch-action: manipulation; /* Prevent browser touch behaviors */
         }
         .header {
             text-align: center;
@@ -52,6 +53,7 @@
             border: 3px solid #4fc3f7;
             border-radius: 10px;
             box-shadow: 0 0 25px rgba(79, 195, 247, 0.5);
+            touch-action: none; /* Prevent default touch behaviors on canvas */
         }
         .status-panel {
             background: rgba(30, 60, 114, 0.8);
@@ -295,6 +297,12 @@
                 height: auto;
                 max-width: 400px;
                 max-height: 400px;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+            .subtitle {
+                font-size: 1rem;
             }
         }
     </style>
@@ -951,13 +959,43 @@
         let game = new Game();
 
         function getClickedPos(x, y) {
+            // Increase touch target area for mobile devices
+            const touchRadius = window.innerWidth <= 900 ? 35 : 25;
+            
             for (let i = 0; i < positions.length; i++) {
                 const [px, py] = positions[i];
                 const dx = x - px;
                 const dy = y - py;
-                if (dx * dx + dy * dy < 25 * 25) return i;
+                if (dx * dx + dy * dy < touchRadius * touchRadius) return i;
             }
             return null;
+        }
+
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            
+            // Handle both mouse and touch events
+            let clientX, clientY;
+            
+            if (e.type.includes('touch')) {
+                // For touch events
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                // For mouse events
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            // Calculate the scale factor for responsive canvas
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            // Adjust coordinates for canvas scaling
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            
+            return { x, y };
         }
 
         function drawBoard() {
@@ -1120,11 +1158,15 @@
             animationFrame = requestAnimationFrame(animate);
         }
 
-        canvas.addEventListener('click', (e) => {
+        function handleInteraction(e) {
             if (game.turn !== 0 || game.winner !== null) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            
+            // Prevent default behavior for touch events to avoid scrolling
+            if (e.type === 'touchstart' || e.type === 'touchmove') {
+                e.preventDefault();
+            }
+            
+            const { x, y } = getCanvasCoordinates(e);
             const clicked = getClickedPos(x, y);
             if (clicked === null) return;
 
@@ -1207,7 +1249,11 @@
                     }
                 }
             }
-        });
+        }
+
+        // Add event listeners for both mouse and touch
+        canvas.addEventListener('click', handleInteraction);
+        canvas.addEventListener('touchstart', handleInteraction, { passive: false });
 
         document.getElementById('new-game').addEventListener('click', () => {
             cancelAnimationFrame(animationFrame);
