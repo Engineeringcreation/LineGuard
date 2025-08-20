@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mill Guard - Complete Fix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2a5298);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.7);
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a5d6a7;
+            margin-bottom: 20px;
+        }
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .board-container {
+            position: relative;
+        }
+        #board {
+            background-color: #1e3c72;
+            border: 3px solid #4fc3f7;
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(79, 195, 247, 0.5);
+        }
+        .status-panel {
+            background: rgba(30, 60, 114, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .player-status {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .player-title {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .player-title::before {
+            content: "";
+            display: inline-block;
+            width: 14px; /* Reduced by 30% */
+            height: 14px; /* Reduced by 30% */
+            border-radius: 50%;
+        }
+        .player1 .player-title::before {
+            background: #4caf50;
+        }
+        .player2 .player-title::before {
+            background: #ffc107;
+        }
+        .coins {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .coin {
+            width: 14px; /* Reduced by 30% */
+            height: 14px; /* Reduced by 30% */
+            border-radius: 50%;
+        }
+        .player1 .coin {
+            background: #4caf50;
+        }
+        .player2 .coin {
+            background: #ffc107;
+        }
+        .turn-indicator {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background: rgba(79, 195, 247, 0.2);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .player1-turn {
+            background: rgba(76, 175, 80, 0.3);
+            color: #a5d6a7;
+        }
+        .player2-turn {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffecb3;
+        }
+        .phase-indicator {
+            text-align: center;
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: rgba(126, 87, 194, 0.3);
+        }
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .timer {
+            width: 100%;
+            height: 10px;
+            background: #2c3e50;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .timer-progress {
+            height: 100%;
+            background: #4fc3f7;
+            width: 100%;
+            transition: width 1s linear;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            font-size: 16px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to right, #3A5FCD, #7B68EE);
+        }
+        .restriction-info {
+            background: rgba(255, 82, 82, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            border-left: 4px solid #ff5252;
+        }
+        .winner-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);
+            border: 2px solid gold;
+            display: none;
+        }
+        .winner-banner h2 {
+            font-size: 2.5rem;
+            color: gold;
+            margin-bottom: 15px;
+        }
+        .winner-banner button {
+            margin-top: 20px;
+        }
+        .foul-warning {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 82, 82, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(255, 82, 82, 0.7);
+            display: none;
+        }
+        .info-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.7);
+            display: none;
+        }
+        .rules-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1e3c72;
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 1000;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            border: 2px solid #4fc3f7;
+        }
+        .rules-modal h2 {
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .rules-modal ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+        .rules-modal li {
+            margin-bottom: 10px;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 900;
+        }
+        .instruction-box {
+            background: rgba(79, 195, 247, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 0.95rem;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (max-width: 900px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .status-panel {
+                width: 100%;
+                max-width: 600px;
+            }
+            #board {
+                width: 100%;
+                height: auto;
+                max-width: 400px;
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Line Guard</h1>
+        <div class="subtitle">A strategic game of forming lines and blocking opponents</div>
+    </div>
+
+    <div class="game-container">
+        <div class="board-container">
+            <canvas id="board" width="600" height="600"></canvas>
+            <div class="winner-banner" id="winner-banner">
+                <h2 id="winner-text">Player Wins!</h2>
+                <button id="play-again">Play Again</button>
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <div class="instruction-box" id="instruction-box">
+                Select a place to put your coin
+            </div>
+            
+            <div class="player-status player1">
+                <div class="player-title">Player (Green)</div>
+                <div>Available coins: <span id="player-available">9</span></div>
+                <div class="coins" id="player-coins">
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                </div>
+                <div>Captured: <span id="player-winning">0</span></div>
+            </div>
+
+            <div class="turn-indicator player1-turn" id="turn-indicator">Player's Turn</div>
+            
+            <div class="timer-container">
+                <div class="timer">
+                    <div class="timer-progress" id="timer-progress"></div>
+                </div>
+            </div>
+            
+            <div class="phase-indicator">
+                Phase: <span id="phase-indicator">Placement</span>
+            </div>
+
+            <div class="player-status player2">
+                <div class="player-title">Computer (Yellow)</div>
+                <div>Available coins: <span id="computer-available">9</span></div>
+                <div class="coins" id="computer-coins">
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                </div>
+                <div>Captured: <span id="computer-winning">0</span></div>
+            </div>
+
+            <div class="controls">
+                <button id="new-game">New Game</button>
+                <button id="show-rules">Show Rules</button>
+            </div>
+
+            <div class="restriction-info">
+                <strong>Restriction Active:</strong> After forming a mill, you cannot use the same coin to form the same mill in your next turn.
+            </div>
+        </div>
+    </div>
+
+    <div class="foul-warning" id="foul-warning">
+        Invalid move! Please try again.
+    </div>
+
+    <div class="info-message" id="info-message">
+        Time's up! Computer's turn now.
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="rules-modal" id="rules-modal">
+        <h2>Game Rules: Mill Guard</h2>
+        <p>1. Players: There are two players—one is the system (computer), and the other is the user.</p>
+        <p>2. Coins: Each player has 9 coins.</p>
+        <p>3. Game Board: There are 24 places to position the coins.</p>
+        <p>4. Gameplay:</p>
+        <ul>
+            <li>The first player (user or computer) places a coin on any empty spot.</li>
+            <li>The second player then places their coin, and turns alternate until all coins are placed.</li>
+            <li>Each player has 20 seconds to make a move, or the turn passes to the opponent.</li>
+        </ul>
+        <p>5. Objective:</p>
+        <ul>
+            <li>Each player aims to form a straight line of three coins (triplet formed) while blocking the opponent from doing the same.</li>
+            <li>If a player successfully forms a straight line with three coins, they can remove one of the opponent's coins from the board except the (triplet formed coins).</li>
+        </ul>
+        <p>6. Movement Phase:</p>
+        <ul>
+            <li>After a player has placed all 9 coins, they can start moving their coins to adjacent empty spots to form new lines.</li>
+            <li>Whenever a player forms a straight line(triplet), they can remove one opponent's coin.</li>
+        </ul>
+        <p>7. Winning Condition:</p>
+        <ul>
+            <li>The player who reduces the opponent to only 2 coins (making mill formation impossible) wins the game.</li>
+        </ul>
+        <p>8. Restriction:</p>
+        <ul>
+            <li>If a player forms a line (triplet) during the movement phase, and uses one of the coins from that triplet, then the same coin cannot be used in the following turn to form the same line again. The player must wait until the turn after next before reusing that coin for the same triplet.</li>
+        </ul>
+        <button id="close-rules">Close</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('board');
+        const ctx = canvas.getContext('2d');
+        const positions = [
+            [40, 40], [280, 40], [520, 40],
+            [120, 120], [280, 120], [440, 120],
+            [200, 200], [280, 200], [360, 200],
+            [40, 280], [120, 280], [200, 280], [360, 280], [440, 280], [520, 280],
+            [200, 360], [280, 360], [360, 360],
+            [120, 440], [280, 440], [440, 440],
+            [40, 520], [280, 520], [520, 520]
+        ];
+
+        const adj = [
+            [1, 9], [0, 2, 4], [1, 14],
+            [4, 10], [1, 3, 5, 7], [4, 13],
+            [7, 11], [4, 6, 8], [7, 12],
+            [0, 10, 21], [3, 9, 11, 18], [6, 10, 15],
+            [8, 13, 17], [5, 12, 14, 20], [2, 13, 23],
+            [11, 16], [15, 17, 19], [12, 16],
+            [10, 19], [16, 18, 20, 22], [13, 19],
+            [9, 22], [19, 21, 23], [14, 22]
+        ];
+
+        const mills = [
+            [0,1,2], [3,4,5], [6,7,8], [9,10,11], [12,13,14], [15,16,17], [18,19,20], [21,22,23],
+            [0,9,21], [3,10,18], [6,11,15], [1,4,7], [16,19,22], [8,12,17], [5,13,20], [2,14,23]
+        ];
+
+        class Game {
+            constructor() {
+                this.board = Array(24).fill(null);
+                this.playerPiecesLeft = 9;
+                this.computerPiecesLeft = 9;
+                this.playerCaptured = 0;
+                this.computerCaptured = 0;
+                this.phase = 'placement';
+                this.turn = 0;
+                this.selected = null;
+                this.millsToRemove = 0;
+                this.highlightMills = [];
+                this.flashTimer = 0;
+                this.winner = null;
+                this.playerCanMove = false;
+                this.computerCanMove = false;
+                this.restrictedMills = { 0: null, 1: null };
+                this.lastMoveFromPos = { 0: null, 1: null };
+                this.timer = null;
+                this.timeLeft = 20;
+                this.possibleMoves = [];
+            }
+
+            getPieces(player) {
+                return this.board.reduce((acc, val, idx) => {
+                    if (val === player) acc.push(idx);
+                    return acc;
+                }, []);
+            }
+
+            countPiecesOnBoard(player) {
+                return this.getPieces(player).length;
+            }
+
+            hasMoves(player) {
+                const pieces = this.getPieces(player);
+                for (let p of pieces) {
+                    if (adj[p].some(a => this.board[a] === null)) return true;
+                }
+                return false;
+            }
+
+            getAllMills(player) {
+                return mills.filter(m => m.every(pos => this.board[pos] === player));
+            }
+
+            placePiece(pos, player) {
+                if (this.board[pos] !== null) return false;
+                const oldMills = this.getAllMills(player);
+                this.board[pos] = player;
+                const newMills = this.getAllMills(player);
+                const newFormed = newMills.filter(m => !oldMills.some(om => this.arraysEqual(om, m)));
+                this.millsToRemove += newFormed.length;
+                if (newFormed.length > 0) {
+                    this.highlightMills = newFormed;
+                    this.flashTimer = 60;
+                    // Set restriction for the player who formed the mill
+                    this.restrictedMills[player] = newFormed[0];
+                }
+                
+                // Update movement phase status
+                if (player === 0) {
+                    this.playerPiecesLeft -= 1;
+                    if (this.playerPiecesLeft === 0) {
+                        this.playerCanMove = true;
+                    }
+                } else {
+                    this.computerPiecesLeft -= 1;
+                    if (this.computerPiecesLeft === 0) {
+                        this.computerCanMove = true;
+                    }
+                }
+                
+                // Check if both players can move (all pieces placed)
+                if (this.playerCanMove && this.computerCanMove) {
+                    this.phase = 'movement';
+                    document.getElementById('phase-indicator').textContent = 'Movement';
+                }
+                
+                return true;
+            }
+
+            movePiece(fromPos, toPos, player) {
+                if (this.board[fromPos] !== player || this.board[toPos] !== null || !adj[fromPos].includes(toPos)) return false;
+                
+                // Check if this move would violate the mill restriction
+                if (this.phase === 'movement' && this.restrictedMills[player]) {
+                    const restrictedMill = this.restrictedMills[player];
+                    if (restrictedMill.includes(fromPos)) {
+                        // Check if moving this coin would reform the same mill
+                        const tempBoard = [...this.board];
+                        tempBoard[fromPos] = null;
+                        tempBoard[toPos] = player;
+                        
+                        const wouldReformMill = mills.some(mill => {
+                            if (!this.arraysEqual(mill, restrictedMill)) return false;
+                            return mill.every(pos => tempBoard[pos] === player);
+                        });
+                        
+                        if (wouldReformMill) {
+                            return false; // Violates restriction
+                        }
+                    }
+                }
+                
+                const oldMills = this.getAllMills(player);
+                this.board[toPos] = player;
+                this.board[fromPos] = null;
+                const newMills = this.getAllMills(player);
+                const newFormed = newMills.filter(m => !oldMills.some(om => this.arraysEqual(om, m)));
+                
+                if (newFormed.length > 0) {
+                    this.millsToRemove += newFormed.length;
+                    this.highlightMills = newFormed;
+                    this.flashTimer = 60;
+                    // Set restriction for the player who formed the mill
+                    this.restrictedMills[player] = newFormed[0];
+                } else {
+                    // Clear restriction if no new mill was formed
+                    this.restrictedMills[player] = null;
+                }
+                
+                // Track the last move
+                this.lastMoveFromPos[player] = fromPos;
+                
+                return true;
+            }
+
+            arraysEqual(a, b) {
+                if (a === b) return true;
+                if (a == null || b == null) return false;
+                if (a.length !== b.length) return false;
+                
+                // Sort arrays to compare regardless of order
+                const sortedA = [...a].sort();
+                const sortedB = [...b].sort();
+                
+                for (let i = 0; i < sortedA.length; ++i) {
+                    if (sortedA[i] !== sortedB[i]) return false;
+                }
+                return true;
+            }
+
+            removePiece(pos, player) {
+                const opponent = 1 - player;
+                if (this.board[pos] !== opponent) return false;
+                
+                // Check if all opponent's coins are in mills (special case)
+                const opponentPieces = this.getPieces(opponent);
+                const opponentMills = this.getAllMills(opponent);
+                const allInMills = opponentPieces.every(piece => 
+                    opponentMills.some(mill => mill.includes(piece))
+                );
+                
+                // If all opponent's coins are in mills, allow removing from mills
+                if (allInMills || !opponentMills.some(m => m.includes(pos))) {
+                    this.board[pos] = null;
+                    
+                    if (player === 0) {
+                        this.computerCaptured += 1;
+                    } else {
+                        this.playerCaptured += 1;
+                    }
+                    
+                    this.checkWin();
+                    return true;
+                }
+                
+                return false;
+            }
+
+            checkWin() {
+                // Player wins if computer has 2 or fewer pieces left
+                if (this.countPiecesOnBoard(1) <= 2 && this.computerPiecesLeft === 0) {
+                    this.winner = 0;
+                    document.getElementById('winner-text').textContent = 'Player Wins!';
+                    document.getElementById('winner-banner').style.display = 'block';
+                    this.stopTimer();
+                    return;
+                }
+                
+                // Computer wins if player has 2 or fewer pieces left
+                if (this.countPiecesOnBoard(0) <= 2 && this.playerPiecesLeft === 0) {
+                    this.winner = 1;
+                    document.getElementById('winner-text').textContent = 'Computer Wins!';
+                    document.getElementById('winner-banner').style.display = 'block';
+                    this.stopTimer();
+                    return;
+                }
+                
+                // Check if current player has no moves
+                const currentPlayer = this.turn;
+                if (this.phase === 'movement' && !this.hasMoves(currentPlayer)) {
+                    this.winner = 1 - currentPlayer;
+                    document.getElementById('winner-text').textContent = this.winner === 0 ? 'Player Wins!' : 'Computer Wins!';
+                    document.getElementById('winner-banner').style.display = 'block';
+                    this.stopTimer();
+                }
+            }
+
+            startTimer() {
+                this.stopTimer();
+                this.timeLeft = 20;
+                document.getElementById('timer-progress').style.width = '100%';
+                
+                this.timer = setInterval(() => {
+                    this.timeLeft--;
+                    const percentage = (this.timeLeft / 20) * 100;
+                    document.getElementById('timer-progress').style.width = percentage + '%';
+                    
+                    if (this.timeLeft <= 0) {
+                        this.stopTimer();
+                        if (this.turn === 0) {
+                            // Player time out - computer's turn
+                            this.showInfoMessage("Time's up! Computer's turn now.");
+                            this.turn = 1;
+                            // Use setTimeout to allow the message to be displayed before computer plays
+                            setTimeout(() => {
+                                this.playComputerTurn();
+                            }, 1500);
+                        }
+                    }
+                }, 1000);
+            }
+            
+            stopTimer() {
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+            }
+            
+            showFoulWarning(message) {
+                const foulWarning = document.getElementById('foul-warning');
+                foulWarning.textContent = message;
+                foulWarning.style.display = 'block';
+                
+                setTimeout(() => {
+                    foulWarning.style.display = 'none';
+                }, 2000);
+            }
+            
+            showInfoMessage(message) {
+                const infoMessage = document.getElementById('info-message');
+                infoMessage.textContent = message;
+                infoMessage.style.display = 'block';
+                
+                setTimeout(() => {
+                    infoMessage.style.display = 'none';
+                }, 1500);
+            }
+
+            reset() {
+                this.board = Array(24).fill(null);
+                this.playerPiecesLeft = 9;
+                this.computerPiecesLeft = 9;
+                this.playerCaptured = 0;
+                this.computerCaptured = 0;
+                this.phase = 'placement';
+                this.turn = 0;
+                this.selected = null;
+                this.millsToRemove = 0;
+                this.highlightMills = [];
+                this.flashTimer = 0;
+                this.winner = null;
+                this.playerCanMove = false;
+                this.computerCanMove = false;
+                this.restrictedMills = { 0: null, 1: null };
+                this.lastMoveFromPos = { 0: null, 1: null };
+                this.possibleMoves = [];
+                this.stopTimer();
+                
+                document.getElementById('phase-indicator').textContent = 'Placement';
+                document.getElementById('player-available').textContent = '9';
+                document.getElementById('computer-available').textContent = '9';
+                document.getElementById('player-winning').textContent = '0';
+                document.getElementById('computer-winning').textContent = '0';
+                document.getElementById('turn-indicator').textContent = "Player's Turn";
+                document.getElementById('turn-indicator').className = 'turn-indicator player1-turn';
+                document.getElementById('winner-banner').style.display = 'none';
+                document.getElementById('instruction-box').textContent = "Select a place to put your coin";
+                
+                // Reset coin displays
+                document.getElementById('player-coins').innerHTML = 
+                    '<div class="coin"></div>'.repeat(9);
+                document.getElementById('computer-coins').innerHTML = 
+                    '<div class="coin"></div>'.repeat(9);
+            }
+            
+            playComputerTurn() {
+                if (this.winner !== null) return;
+                
+                // Small delay for better UX
+                setTimeout(() => {
+                    while (true) {
+                        if (this.millsToRemove > 0) {
+                            const didRemove = this.computerRemove();
+                            this.millsToRemove -= 1;
+                            if (!didRemove) {
+                                // If no piece could be removed, end the turn
+                                this.millsToRemove = 0;
+                                break;
+                            }
+                        } else {
+                            this.computerAction();
+                        }
+                        if (this.millsToRemove === 0) break;
+                    }
+                    this.turn = 0;
+                    render();
+                }, 800);
+            }
+            
+            computerRemove() {
+                const opponent = 0;
+                const removable = [];
+                
+                // First, check if all player coins are in mills
+                const playerPieces = this.getPieces(opponent);
+                const playerMills = this.getAllMills(opponent);
+                const allInMills = playerPieces.every(piece => 
+                    playerMills.some(mill => mill.includes(piece))
+                );
+                
+                for (let p = 0; p < 24; p++) {
+                    if (this.board[p] === opponent && (allInMills || !playerMills.some(m => m.includes(p)))) {
+                        removable.push(p);
+                    }
+                }
+                
+                if (removable.length > 0) {
+                    const pos = removable[Math.floor(Math.random() * removable.length)];
+                    this.removePiece(pos, 1);
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            computerAction() {
+                if (!this.computerCanMove) {
+                    // Placement phase - try to form mills or block player mills
+                    const empty = [];
+                    for (let i = 0; i < 24; i++) {
+                        if (this.board[i] === null) empty.push(i);
+                    }
+                    if (empty.length === 0) return;
+                    
+                    // Strategy: Try to complete a mill first
+                    for (let mill of mills) {
+                        let emptyCount = 0;
+                        let emptyPos = -1;
+                        let computerCount = 0;
+                        
+                        for (let pos of mill) {
+                            if (this.board[pos] === null) {
+                                emptyCount++;
+                                emptyPos = pos;
+                            } else if (this.board[pos] === 1) {
+                                computerCount++;
+                            }
+                        }
+                        
+                        if (computerCount === 2 && emptyCount === 1) {
+                            this.placePiece(emptyPos, 1);
+                            return;
+                        }
+                    }
+                    
+                    // Strategy: Block player mills
+                    for (let mill of mills) {
+                        let emptyCount = 0;
+                        let emptyPos = -1;
+                        let playerCount = 0;
+                        
+                        for (let pos of mill) {
+                            if (this.board[pos] === null) {
+                                emptyCount++;
+                                emptyPos = pos;
+                            } else if (this.board[pos] === 0) {
+                                playerCount++;
+                            }
+                        }
+                        
+                        if (playerCount === 2 && emptyCount === 1) {
+                            this.placePiece(emptyPos, 1);
+                            return;
+                        }
+                    }
+                    
+                    // Default: random placement
+                    const pos = empty[Math.floor(Math.random() * empty.length)];
+                    this.placePiece(pos, 1);
+                    
+                    // Check if computer can now move
+                    if (this.computerPiecesLeft === 0) {
+                        this.computerCanMove = true;
+                        if (this.playerCanMove) {
+                            this.phase = 'movement';
+                            document.getElementById('phase-indicator').textContent = 'Movement';
+                        }
+                    }
+                } else {
+                    // Movement phase
+                    if (!this.hasMoves(1)) {
+                        this.winner = 0;
+                        document.getElementById('winner-text').textContent = 'Player Wins!';
+                        document.getElementById('winner-banner').style.display = 'block';
+                        return;
+                    }
+                    
+                    const pieces = this.getPieces(1);
+                    const movable = pieces.filter(p => adj[p].some(a => this.board[a] === null));
+                    
+                    // Strategy: Try to form a mill
+                    for (let fromPos of movable) {
+                        const possible = adj[fromPos].filter(a => this.board[a] === null);
+                        
+                        for (let toPos of possible) {
+                            // Check if this move would create a mill
+                            const tempBoard = [...this.board];
+                            tempBoard[fromPos] = null;
+                            tempBoard[toPos] = 1;
+                            
+                            for (let mill of mills) {
+                                if (mill.every(pos => tempBoard[pos] === 1)) {
+                                    // This move would create a mill
+                                    if (this.movePiece(fromPos, toPos, 1)) {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Strategy: Try to block player mills
+                    for (let fromPos of movable) {
+                        const possible = adj[fromPos].filter(a => this.board[a] === null);
+                        
+                        for (let toPos of possible) {
+                            // Check if this move would block a player mill
+                            const tempBoard = [...this.board];
+                            tempBoard[fromPos] = null;
+                            tempBoard[toPos] = 1;
+                            
+                            for (let mill of mills) {
+                                let playerCount = 0;
+                                let emptyCount = 0;
+                                
+                                for (let pos of mill) {
+                                    if (tempBoard[pos] === 0) playerCount++;
+                                    if (tempBoard[pos] === null) emptyCount++;
+                                }
+                                
+                                if (playerCount === 2 && emptyCount === 1) {
+                                    // This move would block a player mill
+                                    if (this.movePiece(fromPos, toPos, 1)) {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Default: random move that doesn't violate restrictions
+                    let validMoveFound = false;
+                    let attempts = 0;
+                    const maxAttempts = 100;
+                    
+                    while (!validMoveFound && attempts < maxAttempts) {
+                        attempts++;
+                        const fromPos = movable[Math.floor(Math.random() * movable.length)];
+                        const possible = adj[fromPos].filter(a => this.board[a] === null);
+                        
+                        if (possible.length > 0) {
+                            const toPos = possible[Math.floor(Math.random() * possible.length)];
+                            
+                            // Check if this move would violate the mill restriction
+                            if (this.restrictedMills[1]) {
+                                const restrictedMill = this.restrictedMills[1];
+                                if (restrictedMill.includes(fromPos)) {
+                                    // Check if moving this coin would reform the same mill
+                                    const tempBoard = [...this.board];
+                                    tempBoard[fromPos] = null;
+                                    tempBoard[toPos] = 1;
+                                    
+                                    const wouldReformMill = mills.some(mill => {
+                                        if (!this.arraysEqual(mill, restrictedMill)) return false;
+                                        return mill.every(pos => tempBoard[pos] === 1);
+                                    });
+                                    
+                                    if (wouldReformMill) {
+                                        continue; // Skip this move as it violates the restriction
+                                    }
+                                }
+                            }
+                            
+                            validMoveFound = this.movePiece(fromPos, toPos, 1);
+                        }
+                    }
+                    
+                    if (!validMoveFound && attempts >= maxAttempts) {
+                        // If we can't find a valid move after many attempts, just make any move
+                        const fromPos = movable[Math.floor(Math.random() * movable.length)];
+                        const possible = adj[fromPos].filter(a => this.board[a] === null);
+                        if (possible.length > 0) {
+                            const toPos = possible[Math.floor(Math.random() * possible.length)];
+                            this.movePiece(fromPos, toPos, 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        let game = new Game();
+
+        function getClickedPos(x, y) {
+            for (let i = 0; i < positions.length; i++) {
+                const [px, py] = positions[i];
+                const dx = x - px;
+                const dy = y - py;
+                if (dx * dx + dy * dy < 25 * 25) return i;
+            }
+            return null;
+        }
+
+        function drawBoard() {
+            ctx.fillStyle = '#1e3c72';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw board lines
+            ctx.strokeStyle = '#4fc3f7';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 24; i++) {
+                for (let j of adj[i]) {
+                    if (j > i) {
+                        const [x1, y1] = positions[i];
+                        const [x2, y2] = positions[j];
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Draw points
+            for (let pos of positions) {
+                ctx.beginPath();
+                ctx.arc(pos[0], pos[1], 25, 0, Math.PI * 2);
+                ctx.fillStyle = '#1a3a5f';
+                ctx.fill();
+                ctx.strokeStyle = '#4fc3f7';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        function drawPieces() {
+            for (let i = 0; i < 24; i++) {
+                if (game.board[i] !== null) {
+                    // Draw coin shadow
+                    ctx.beginPath();
+                    ctx.arc(positions[i][0] + 2, positions[i][1] + 2, 14, 0, Math.PI * 2); // Reduced by 30%
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                    ctx.fill();
+                    
+                    // Draw coin
+                    const gradient = ctx.createRadialGradient(
+                        positions[i][0] - 3.5, positions[i][1] - 3.5, 3.5, // Reduced by 30%
+                        positions[i][0], positions[i][1], 14 // Reduced by 30%
+                    );
+                    
+                    if (game.board[i] === 0) {
+                        // Player (green)
+                        gradient.addColorStop(0, '#a5d6a7');
+                        gradient.addColorStop(1, '#4caf50');
+                    } else {
+                        // Computer (yellow)
+                        gradient.addColorStop(0, '#fff59d');
+                        gradient.addColorStop(1, '#ffc107');
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.arc(positions[i][0], positions[i][1], 14, 0, Math.PI * 2); // Reduced by 30%
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    
+                    // Draw coin border
+                    ctx.strokeStyle = game.board[i] === 0 ? '#2e7d32' : '#ff8f00';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw selected coin highlight
+            if (game.selected !== null) {
+                ctx.beginPath();
+                ctx.arc(positions[game.selected][0], positions[game.selected][1], 17.5, 0, Math.PI * 2); // Reduced by 30%
+                ctx.strokeStyle = '#ff5252';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw possible moves (changed from blue to magenta)
+                if (game.phase === 'movement') {
+                    game.possibleMoves = adj[game.selected].filter(pos => game.board[pos] === null);
+                    
+                    for (let pos of game.possibleMoves) {
+                        ctx.beginPath();
+                        ctx.arc(positions[pos][0], positions[pos][1], 12.6, 0, Math.PI * 2); // Reduced by 30%
+                        ctx.fillStyle = 'rgba(255, 0, 255, 0.6)'; // Magenta color
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Draw mill highlight
+            if (game.flashTimer > 0) {
+                const flash = Math.floor(game.flashTimer / 10) % 2 === 0;
+                if (flash) {
+                    ctx.strokeStyle = '#ff5252';
+                    ctx.lineWidth = 4;
+                    for (let m of game.highlightMills) {
+                        for (let p of m) {
+                            ctx.beginPath();
+                            ctx.arc(positions[p][0], positions[p][1], 19.6, 0, Math.PI * 2); // Reduced by 30%
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateStatus() {
+            document.getElementById('player-available').textContent = game.playerPiecesLeft;
+            document.getElementById('player-winning').textContent = game.computerCaptured;
+            document.getElementById('computer-available').textContent = game.computerPiecesLeft;
+            document.getElementById('computer-winning').textContent = game.playerCaptured;
+            
+            // Update coin displays
+            document.getElementById('player-coins').innerHTML = 
+                '<div class="coin"></div>'.repeat(game.playerPiecesLeft);
+            document.getElementById('computer-coins').innerHTML = 
+                '<div class="coin"></div>'.repeat(game.computerPiecesLeft);
+            
+            const turnIndicator = document.getElementById('turn-indicator');
+            if (game.turn === 0) {
+                turnIndicator.textContent = "Player's Turn";
+                turnIndicator.className = 'turn-indicator player1-turn';
+                game.startTimer();
+            } else {
+                turnIndicator.textContent = "Computer's Turn";
+                turnIndicator.className = 'turn-indicator player2-turn';
+                game.stopTimer();
+            }
+            
+            document.getElementById('phase-indicator').textContent = game.phase.charAt(0).toUpperCase() + game.phase.slice(1);
+            
+            // Update instruction message
+            const instructionBox = document.getElementById('instruction-box');
+            if (game.millsToRemove > 0) {
+                instructionBox.textContent = "Remove one of computer's coins";
+            } else if (game.phase === 'placement') {
+                instructionBox.textContent = "Select a place to put your coin";
+            } else if (game.selected === null) {
+                instructionBox.textContent = "Select one coin to slide to adjacent place";
+            } else {
+                instructionBox.textContent = "Select an adjacent empty spot to move";
+            }
+        }
+
+        function render() {
+            drawBoard();
+            drawPieces();
+            updateStatus();
+        }
+
+        let animationFrame;
+        function animate() {
+            if (game.flashTimer > 0) {
+                game.flashTimer -= 1;
+                render();
+            }
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (game.turn !== 0 || game.winner !== null) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const clicked = getClickedPos(x, y);
+            if (clicked === null) return;
+
+            if (game.millsToRemove > 0) {
+                if (game.removePiece(clicked, 0)) {
+                    game.millsToRemove -= 1;
+                    if (game.millsToRemove === 0) {
+                        game.turn = 1;
+                        game.playComputerTurn();
+                    }
+                    render();
+                } else {
+                    game.showFoulWarning("You can only remove coins not in mills!");
+                }
+            } else {
+                if (!game.playerCanMove) {
+                    // Placement phase
+                    if (game.playerPiecesLeft > 0 && game.placePiece(clicked, 0)) {
+                        if (game.millsToRemove === 0) {
+                            game.turn = 1;
+                            game.playComputerTurn();
+                        }
+                        render();
+                    } else {
+                        game.showFoulWarning("Invalid placement! Try another position.");
+                    }
+                } else {
+                    // Movement phase
+                    if (!game.hasMoves(0)) {
+                        game.winner = 1;
+                        document.getElementById('winner-text').textContent = 'Computer Wins!';
+                        document.getElementById('winner-banner').style.display = 'block';
+                        render();
+                        return;
+                    }
+                    
+                    if (game.selected === null) {
+                        if (game.board[clicked] === 0) {
+                            game.selected = clicked;
+                            render();
+                        } else {
+                            game.showFoulWarning("Select your own coin to move!");
+                        }
+                    } else {
+                        // Check if this move would violate the mill restriction
+                        if (game.restrictedMills[0]) {
+                            const restrictedMill = game.restrictedMills[0];
+                            if (restrictedMill.includes(game.selected)) {
+                                // Check if moving this coin would reform the same mill
+                                const tempBoard = [...game.board];
+                                tempBoard[game.selected] = null;
+                                tempBoard[clicked] = 0;
+                                
+                                const wouldReformMill = mills.some(mill => {
+                                    if (!game.arraysEqual(mill, restrictedMill)) return false;
+                                    return mill.every(pos => tempBoard[pos] === 0);
+                                });
+                                
+                                if (wouldReformMill) {
+                                    game.showFoulWarning("Restriction: Cannot form the same mill twice in a row!");
+                                    game.selected = null;
+                                    render();
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        if (game.movePiece(game.selected, clicked, 0)) {
+                            game.selected = null;
+                            if (game.millsToRemove === 0) {
+                                game.turn = 1;
+                                game.playComputerTurn();
+                            }
+                            render();
+                        } else {
+                            game.showFoulWarning("Invalid move! Try another position.");
+                            game.selected = null;
+                            render();
+                        }
+                    }
+                }
+            }
+        });
+
+        document.getElementById('new-game').addEventListener('click', () => {
+            cancelAnimationFrame(animationFrame);
+            game.reset();
+            render();
+            animate();
+        });
+
+        document.getElementById('play-again').addEventListener('click', () => {
+            cancelAnimationFrame(animationFrame);
+            game.reset();
+            render();
+            animate();
+        });
+
+        const rulesModal = document.getElementById('rules-modal');
+        const modalOverlay = document.getElementById('modal-overlay');
+        
+        document.getElementById('show-rules').addEventListener('click', () => {
+            rulesModal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+        });
+
+        document.getElementById('close-rules').addEventListener('click', () => {
+            rulesModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+        });
+
+        modalOverlay.addEventListener('click', () => {
+            rulesModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+        });
+
+        // Initialize the game
+        render();
+        animate();
+    </script>
+</body>
+</html>
