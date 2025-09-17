@@ -760,6 +760,10 @@
             updateLocalGameState(gameData) {
                 if (!game || !this.isOnlineGame) return;
 
+                // Only update if this is not the player who made the move
+                // to avoid overwriting local state immediately after making a move
+                const wasMyTurn = game.turn === this.playerNumber;
+                
                 game.board = gameData.board || Array(24).fill(null);
                 game.turn = gameData.turn || 0;
                 game.phase = gameData.phase || 'placement';
@@ -773,8 +777,26 @@
 
                 game.playerCanMove = game.playerPiecesLeft === 0;
                 game.computerCanMove = game.computerPiecesLeft === 0;
+                
+                // Update phase indicator
+                if (game.phase === 'movement') {
+                    document.getElementById('phase-indicator').textContent = 'Movement';
+                } else {
+                    document.getElementById('phase-indicator').textContent = 'Placement';
+                }
+                
+                // Clear selection if it's not our turn
+                if (!game.isMyTurn()) {
+                    game.selected = null;
+                }
 
                 render();
+                console.log('Game state updated from Firebase:', {
+                    turn: game.turn,
+                    myTurn: game.isMyTurn(),
+                    playerNumber: this.playerNumber,
+                    board: game.board.filter(p => p !== null).length + ' pieces on board'
+                });
             }
 
             updatePlayerList(players) {
@@ -914,9 +936,20 @@
                         computerCaptured: this.computerCaptured,
                         millsToRemove: this.millsToRemove,
                         winner: this.winner,
-                        restrictedMills: this.restrictedMills
+                        restrictedMills: this.restrictedMills,
+                        lastUpdate: Date.now()
                     };
-                    await this.onlineManager.updateGameState(gameState);
+                    
+                    try {
+                        await this.onlineManager.updateGameState(gameState);
+                        console.log('Game state synced to Firebase:', {
+                            turn: this.turn,
+                            phase: this.phase,
+                            piecesOnBoard: this.board.filter(p => p !== null).length
+                        });
+                    } catch (error) {
+                        console.error('Failed to sync game state:', error);
+                    }
                 }
             }
 
@@ -985,7 +1018,10 @@
                 
                 // Sync with Firebase for online games
                 if (this.gameMode === 'online') {
-                    await this.syncGameState();
+                    // Small delay to ensure local state is updated
+                    setTimeout(async () => {
+                        await this.syncGameState();
+                    }, 100);
                 }
                 
                 return true;
@@ -1036,7 +1072,10 @@
                 
                 // Sync with Firebase for online games
                 if (this.gameMode === 'online') {
-                    await this.syncGameState();
+                    // Small delay to ensure local state is updated
+                    setTimeout(async () => {
+                        await this.syncGameState();
+                    }, 100);
                 }
                 
                 return true;
@@ -1082,7 +1121,10 @@
                     
                     // Sync with Firebase for online games
                     if (this.gameMode === 'online') {
-                        await this.syncGameState();
+                        // Small delay to ensure local state is updated
+                        setTimeout(async () => {
+                            await this.syncGameState();
+                        }, 100);
                     }
                     
                     return true;
@@ -1713,7 +1755,10 @@
                             game.playComputerTurn();
                         } else if (game.gameMode === 'online') {
                             game.turn = 1 - game.turn;
-                            await game.syncGameState();
+                            // Sync turn change
+                            setTimeout(async () => {
+                                await game.syncGameState();
+                            }, 100);
                         } else {
                             game.turn = 1 - game.turn;
                         }
@@ -1733,7 +1778,10 @@
                                     game.playComputerTurn();
                                 } else if (game.gameMode === 'online') {
                                     game.turn = 1 - game.turn;
-                                    await game.syncGameState();
+                                    // Sync turn change
+                                    setTimeout(async () => {
+                                        await game.syncGameState();
+                                    }, 100);
                                 } else {
                                     game.turn = 1 - game.turn;
                                 }
@@ -1792,7 +1840,10 @@
                                     game.playComputerTurn();
                                 } else if (game.gameMode === 'online') {
                                     game.turn = 1 - game.turn;
-                                    await game.syncGameState();
+                                    // Sync turn change
+                                    setTimeout(async () => {
+                                        await game.syncGameState();
+                                    }, 100);
                                 } else {
                                     game.turn = 1 - game.turn;
                                 }
