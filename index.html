@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mill Guard - Complete Fix</title>
+    <title>Mill Guard - Online Multiplayer</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -19,7 +23,7 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            touch-action: manipulation; /* Prevent browser touch behaviors */
+            touch-action: manipulation;
         }
         .header {
             text-align: center;
@@ -53,7 +57,7 @@
             border: 3px solid #4fc3f7;
             border-radius: 10px;
             box-shadow: 0 0 25px rgba(79, 195, 247, 0.5);
-            touch-action: none; /* Prevent default touch behaviors on canvas */
+            touch-action: none;
         }
         .status-panel {
             background: rgba(30, 60, 114, 0.8);
@@ -78,8 +82,8 @@
         .player-title::before {
             content: "";
             display: inline-block;
-            width: 14px; /* Reduced by 30% */
-            height: 14px; /* Reduced by 30% */
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
         }
         .player1 .player-title::before {
@@ -95,8 +99,8 @@
             flex-wrap: wrap;
         }
         .coin {
-            width: 14px; /* Reduced by 30% */
-            height: 14px; /* Reduced by 30% */
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
         }
         .player1 .coin {
@@ -133,7 +137,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 10px 0;
+            margin: 10px 0 0 0; /* Reduced bottom margin to move timer up */
         }
         .timer {
             width: 100%;
@@ -275,14 +279,76 @@
             background: rgba(79, 195, 247, 0.2);
             padding: 12px;
             border-radius: 8px;
-            margin: 15px 0;
+            margin: 15px 0 0 0; /* Reduced top margin to move closer to timer */
             text-align: center;
             font-size: 0.95rem;
             min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: bold;
+            color: #ffeb3b;
+            animation: blink 1.5s infinite;
+            border: 2px solid #ffc107;
         }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        .mode-selection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .mode-selection h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: #4fc3f7;
+        }
+        .mode-buttons {
+            display: flex;
+            gap: 30px;
+        }
+        .mode-buttons button {
+            padding: 20px 40px;
+            font-size: 1.5rem;
+        }
+        
+        .login-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .google-btn {
+            background: white;
+            color: #333;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .google-btn:hover {
+            background: #f8f9fa;
+            border-color: #4285f4;
+            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+        }
+        
+        /* Anonymous button styles removed */
         @media (max-width: 900px) {
             .game-container {
                 flex-direction: column;
@@ -304,10 +370,67 @@
             .subtitle {
                 font-size: 1rem;
             }
+            .mode-buttons {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .mode-buttons button {
+                padding: 15px 30px;
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="mode-selection" id="login-screen">
+        <h2>Welcome to Mill Guard</h2>
+        <div class="login-options">
+            <button id="google-signin" class="google-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px;">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google
+            </button>
+        </div>
+        <div id="user-info" style="display: none; margin-top: 20px; text-align: center;">
+            <img id="user-photo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;" />
+            <div id="user-name" style="font-size: 1.2rem; margin-bottom: 10px;"></div>
+            <button id="sign-out" style="background: #dc3545; font-size: 0.9rem; padding: 8px 16px;">Sign Out</button>
+        </div>
+    </div>
+
+    <div class="mode-selection" id="mode-selection" style="display: none;">
+        <h2>Select Game Mode</h2>
+        <div class="mode-buttons">
+            <button id="play-computer">Play with Computer</button>
+            <button id="play-player2">Play with Player 2 (Local)</button>
+            <button id="play-online">Play Online</button>
+        </div>
+    </div>
+
+    <div class="mode-selection" id="online-selection" style="display: none;">
+        <h2>Online Multiplayer</h2>
+        <div class="mode-buttons">
+            <button id="create-room">Create Room</button>
+            <button id="join-room">Join Room</button>
+            <button id="back-to-modes">Back</button>
+        </div>
+        <div id="room-info" style="display: none; margin-top: 20px; text-align: center;">
+            <div id="room-code" style="font-size: 1.5rem; margin-bottom: 10px;"></div>
+            <div id="waiting-message" style="color: #4fc3f7;">Waiting for opponent...</div>
+            <div id="player-list" style="margin-top: 15px;"></div>
+        </div>
+        <div id="join-room-input" style="display: none; margin-top: 20px; text-align: center;">
+            <input type="text" id="room-code-input" placeholder="Enter Room Code" style="padding: 10px; font-size: 1.2rem; margin-bottom: 15px; border-radius: 5px; border: none;">
+            <br>
+            <button id="join-room-btn">Join Room</button>
+            <button id="cancel-join">Cancel</button>
+        </div>
+    </div>
+
     <div class="header">
         <h1>Line Guard</h1>
         <div class="subtitle">A strategic game of forming lines and blocking opponents</div>
@@ -323,40 +446,42 @@
         </div>
 
         <div class="status-panel">
-            <div class="instruction-box" id="instruction-box">
-                Select a place to put your coin
-            </div>
-            
-            <div class="player-status player1">
-                <div class="player-title">Player (Green)</div>
-                <div>Available coins: <span id="player-available">9</span></div>
-                <div class="coins" id="player-coins">
-                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
-                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
-                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
-                </div>
-                <div>Captured: <span id="player-winning">0</span></div>
-            </div>
-
-            <div class="turn-indicator player1-turn" id="turn-indicator">Player's Turn</div>
-            
             <div class="timer-container">
                 <div class="timer">
                     <div class="timer-progress" id="timer-progress"></div>
                 </div>
             </div>
             
+            <div class="instruction-box" id="instruction-box">
+                Select a place to put your coin
+            </div>
+            
+            <div class="player-status player1">
+                <div class="player-title">Player 1 (Green)</div>
+                <div>Available coins: <span id="player-available">11</span></div>
+                <div class="coins" id="player-coins">
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div>
+                </div>
+                <div>Captured: <span id="player-winning">0</span></div>
+            </div>
+
+            <div class="turn-indicator player1-turn" id="turn-indicator">Player 1's Turn</div>
+            
             <div class="phase-indicator">
                 Phase: <span id="phase-indicator">Placement</span>
             </div>
 
             <div class="player-status player2">
-                <div class="player-title">Computer (Yellow)</div>
-                <div>Available coins: <span id="computer-available">9</span></div>
+                <div class="player-title" id="player2-title">Computer (Yellow)</div>
+                <div>Available coins: <span id="computer-available">11</span></div>
                 <div class="coins" id="computer-coins">
                     <div class="coin"></div><div class="coin"></div><div class="coin"></div>
                     <div class="coin"></div><div class="coin"></div><div class="coin"></div>
                     <div class="coin"></div><div class="coin"></div><div class="coin"></div>
+                    <div class="coin"></div><div class="coin"></div>
                 </div>
                 <div>Captured: <span id="computer-winning">0</span></div>
             </div>
@@ -364,6 +489,7 @@
             <div class="controls">
                 <button id="new-game">New Game</button>
                 <button id="show-rules">Show Rules</button>
+                <button id="change-mode" style="display: none;">Change Mode</button>
             </div>
 
             <div class="restriction-info">
@@ -384,7 +510,7 @@
     <div class="rules-modal" id="rules-modal">
         <h2>Game Rules: Mill Guard</h2>
         <p>1. Players: There are two players—one is the system (computer), and the other is the user.</p>
-        <p>2. Coins: Each player has 9 coins.</p>
+        <p>2. Coins: Each player has 11 coins.</p>
         <p>3. Game Board: There are 24 places to position the coins.</p>
         <p>4. Gameplay:</p>
         <ul>
@@ -399,7 +525,7 @@
         </ul>
         <p>6. Movement Phase:</p>
         <ul>
-            <li>After a player has placed all 9 coins, they can start moving their coins to adjacent empty spots to form new lines.</li>
+            <li>After a player has placed all 11 coins, they can start moving their coins to adjacent empty spots to form new lines.</li>
             <li>Whenever a player forms a straight line(triplet), they can remove one opponent's coin.</li>
         </ul>
         <p>7. Winning Condition:</p>
@@ -414,6 +540,460 @@
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQQRMUoQBLzUrjUGY-9ltNXanMfjOlxY0",
+            authDomain: "livemint-a267f.firebaseapp.com",
+            databaseURL: "https://livemint-a267f-default-rtdb.firebaseio.com",
+            projectId: "livemint-a267f",
+            storageBucket: "livemint-a267f.firebasestorage.app",
+            messagingSenderId: "103746520614",
+            appId: "1:103746520614:web:c2866a8e884783307788e7",
+            measurementId: "G-46SMPLSVL6"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Authentication Manager
+        class AuthManager {
+            constructor() {
+                this.currentUser = null;
+                this.isAuthenticated = false;
+                this.googleProvider = new firebase.auth.GoogleAuthProvider();
+                this.googleProvider.addScope('profile');
+                this.googleProvider.addScope('email');
+            }
+
+            async signInWithGoogle() {
+                try {
+                    const result = await auth.signInWithPopup(this.googleProvider);
+                    this.currentUser = result.user;
+                    this.isAuthenticated = true;
+                    console.log('Google sign-in successful:', {
+                        uid: result.user.uid,
+                        name: result.user.displayName,
+                        email: result.user.email,
+                        photo: result.user.photoURL
+                    });
+                    return result.user;
+                } catch (error) {
+                    console.error('Google sign-in failed:', error);
+                    throw error;
+                }
+            }
+
+            async signInAnonymously() {
+                try {
+                    const result = await auth.signInAnonymously();
+                    this.currentUser = result.user;
+                    this.isAuthenticated = true;
+                    console.log('Signed in anonymously:', result.user.uid);
+                    return result.user;
+                } catch (error) {
+                    console.error('Anonymous sign-in failed:', error);
+                    throw error;
+                }
+            }
+
+            async signOut() {
+                try {
+                    await auth.signOut();
+                    this.currentUser = null;
+                    this.isAuthenticated = false;
+                    console.log('User signed out');
+                } catch (error) {
+                    console.error('Sign out failed:', error);
+                    throw error;
+                }
+            }
+
+            getCurrentUser() {
+                return this.currentUser;
+            }
+
+            isUserAuthenticated() {
+                return this.isAuthenticated;
+            }
+
+            getUserDisplayName() {
+                return this.currentUser?.displayName || this.currentUser?.email || 'Anonymous Player';
+            }
+
+            getUserPhotoURL() {
+                return this.currentUser?.photoURL || null;
+            }
+
+            async waitForAuth() {
+                return new Promise((resolve) => {
+                    if (this.isAuthenticated) {
+                        resolve(this.currentUser);
+                        return;
+                    }
+
+                    const unsubscribe = auth.onAuthStateChanged((user) => {
+                        if (user) {
+                            this.currentUser = user;
+                            this.isAuthenticated = true;
+                            unsubscribe();
+                            resolve(user);
+                        }
+                    });
+                });
+            }
+        }
+
+        const authManager = new AuthManager();
+
+        // Authentication event listeners
+        function showUserInfo(user) {
+            const userInfo = document.getElementById('user-info');
+            const userPhoto = document.getElementById('user-photo');
+            const userName = document.getElementById('user-name');
+            
+            if (user.photoURL) {
+                userPhoto.src = user.photoURL;
+                userPhoto.style.display = 'block';
+            } else {
+                userPhoto.style.display = 'none';
+            }
+            
+            userName.textContent = authManager.getUserDisplayName();
+            userInfo.style.display = 'block';
+            
+            // Show mode selection immediately after successful login
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'flex';
+        }
+
+        // Initialize authentication on page load
+        window.addEventListener('load', () => {
+            // Check if user is already signed in
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    authManager.currentUser = user;
+                    authManager.isAuthenticated = true;
+                    console.log('User already signed in:', user.uid);
+                    showUserInfo(user);
+                } else {
+                    // Show login screen
+                    document.getElementById('login-screen').style.display = 'flex';
+                }
+            });
+        });
+
+        // Google Sign-In
+        document.getElementById('google-signin').addEventListener('click', async () => {
+            const btn = document.getElementById('google-signin');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Signing in...';
+            btn.disabled = true;
+
+            try {
+                const user = await authManager.signInWithGoogle();
+                showUserInfo(user);
+            } catch (error) {
+                console.error('Google sign-in error:', error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    alert('Sign-in cancelled. Please try again.');
+                } else {
+                    alert('Google sign-in failed: ' + error.message);
+                }
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Anonymous sign-in removed - Google sign-in only
+
+        // Sign Out
+        document.getElementById('sign-out').addEventListener('click', async () => {
+            try {
+                await authManager.signOut();
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('mode-selection').style.display = 'none';
+                document.getElementById('user-info').style.display = 'none';
+                
+                // Reset any ongoing games
+                if (game && game.gameMode === 'online') {
+                    onlineManager.leaveRoom();
+                }
+            } catch (error) {
+                console.error('Sign out error:', error);
+                alert('Sign out failed: ' + error.message);
+            }
+        });
+
+        // Online Game Manager
+        class OnlineGameManager {
+            constructor() {
+                this.roomId = null;
+                this.playerId = null;
+                this.playerNumber = null;
+                this.isHost = false;
+                this.roomRef = null;
+                this.gameRef = null;
+                this.playersRef = null;
+                this.isOnlineGame = false;
+                this.opponentDisconnected = false;
+            }
+
+            generateRoomCode() {
+                return Math.random().toString(36).substring(2, 8).toUpperCase();
+            }
+
+            async createRoom() {
+                // Ensure user is authenticated
+                await authManager.waitForAuth();
+                const user = authManager.getCurrentUser();
+                if (!user) {
+                    throw new Error('Authentication required');
+                }
+
+                this.roomId = this.generateRoomCode();
+                this.playerId = user.uid;
+                this.playerNumber = 0;
+                this.isHost = true;
+                this.isOnlineGame = true;
+
+                this.roomRef = database.ref(`rooms/${this.roomId}`);
+                this.gameRef = database.ref(`rooms/${this.roomId}/game`);
+                this.playersRef = database.ref(`rooms/${this.roomId}/players`);
+
+                // Create room data
+                await this.roomRef.set({
+                    host: this.playerId,
+                    created: firebase.database.ServerValue.TIMESTAMP,
+                    status: 'waiting',
+                    players: {
+                        [this.playerId]: {
+                            playerNumber: 0,
+                            name: authManager.getUserDisplayName(),
+                            connected: true,
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP
+                        }
+                    },
+                    game: {
+                        board: Array(24).fill(null),
+                        turn: 0,
+                        phase: 'placement',
+                        playerPiecesLeft: 11,
+                        computerPiecesLeft: 11,
+                        playerCaptured: 0,
+                        computerCaptured: 0,
+                        millsToRemove: 0,
+                        winner: null,
+                        restrictedMills: { 0: null, 1: null }
+                    }
+                });
+
+                this.setupListeners();
+                return this.roomId;
+            }
+
+            async joinRoom(roomCode) {
+                try {
+                    console.log('Step 1: Checking authentication...');
+                    // Ensure user is authenticated
+                    await authManager.waitForAuth();
+                    const user = authManager.getCurrentUser();
+                    if (!user) {
+                        throw new Error('Authentication required');
+                    }
+                    console.log('Step 1: User authenticated:', user.uid);
+
+                    this.roomId = roomCode.toUpperCase();
+                    this.playerId = user.uid;
+                    this.isOnlineGame = true;
+
+                    console.log('Step 2: Setting up database references for room:', this.roomId);
+                    this.roomRef = database.ref(`rooms/${this.roomId}`);
+                    this.gameRef = database.ref(`rooms/${this.roomId}/game`);
+                    this.playersRef = database.ref(`rooms/${this.roomId}/players`);
+
+                    console.log('Step 3: Checking if room exists...');
+                    // Check if room exists
+                    const roomSnapshot = await this.roomRef.once('value');
+                    if (!roomSnapshot.exists()) {
+                        console.error('Room not found:', this.roomId);
+                        throw new Error('Room not found');
+                    }
+                    console.log('Step 3: Room exists');
+
+                    const roomData = roomSnapshot.val();
+                    console.log('Step 4: Room data:', roomData);
+                    const playerCount = Object.keys(roomData.players || {}).length;
+                    console.log('Step 4: Current player count:', playerCount);
+
+                    if (playerCount >= 2) {
+                        throw new Error('Room is full');
+                    }
+
+                    // Check if user is already in the room
+                    if (roomData.players && roomData.players[this.playerId]) {
+                        console.log('Step 5: User already in room, rejoining...');
+                        this.playerNumber = roomData.players[this.playerId].playerNumber;
+                        this.isHost = roomData.host === this.playerId;
+                    } else {
+                        console.log('Step 5: Adding new player to room...');
+                        this.playerNumber = 1;
+                        this.isHost = false;
+
+                        // Add player to room
+                        await this.playersRef.child(this.playerId).set({
+                            playerNumber: 1,
+                            name: authManager.getUserDisplayName(),
+                            connected: true,
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP
+                        });
+                        console.log('Step 5: Player added successfully');
+                    }
+
+                    console.log('Step 6: Updating room status...');
+                    // Update room status
+                    await this.roomRef.child('status').set('playing');
+                    console.log('Step 6: Room status updated');
+
+                    console.log('Step 7: Setting up listeners...');
+                    this.setupListeners();
+                    console.log('Step 7: Listeners set up successfully');
+                    
+                    return this.roomId;
+                } catch (error) {
+                    console.error('joinRoom failed at step:', error.message);
+                    throw error;
+                }
+            }
+
+            setupListeners() {
+                // Listen for game state changes
+                this.gameRef.on('value', (snapshot) => {
+                    if (snapshot.exists() && this.isOnlineGame) {
+                        const gameData = snapshot.val();
+                        this.updateLocalGameState(gameData);
+                    }
+                });
+
+                // Listen for player connections
+                this.playersRef.on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        const players = snapshot.val();
+                        this.updatePlayerList(players);
+                    }
+                });
+
+                // Handle disconnection
+                this.playersRef.child(this.playerId).onDisconnect().update({
+                    connected: false,
+                    lastSeen: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                // Keep connection alive
+                setInterval(() => {
+                    if (this.isOnlineGame && this.playerId) {
+                        this.playersRef.child(this.playerId).update({
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    }
+                }, 30000);
+            }
+
+            updateLocalGameState(gameData) {
+                if (!game || !this.isOnlineGame) return;
+
+                // Update game state
+                game.board = gameData.board || Array(24).fill(null);
+                game.turn = gameData.turn || 0;
+                game.phase = gameData.phase || 'placement';
+                game.playerPiecesLeft = gameData.playerPiecesLeft || 11;
+                game.computerPiecesLeft = gameData.computerPiecesLeft || 11;
+                game.playerCaptured = gameData.playerCaptured || 0;
+                game.computerCaptured = gameData.computerCaptured || 0;
+                game.millsToRemove = gameData.millsToRemove || 0;
+                game.winner = gameData.winner || null;
+                game.restrictedMills = gameData.restrictedMills || { 0: null, 1: null };
+
+                // Update phase flags
+                game.playerCanMove = game.playerPiecesLeft === 0;
+                game.computerCanMove = game.computerPiecesLeft === 0;
+
+                render();
+            }
+
+            updatePlayerList(players) {
+                const playerList = document.getElementById('player-list');
+                const waitingMessage = document.getElementById('waiting-message');
+                
+                if (playerList) {
+                    const playerCount = Object.keys(players).length;
+                    let html = '';
+                    
+                    Object.values(players).forEach(player => {
+                        const status = player.connected ? '🟢' : '🔴';
+                        html += `<div>${status} ${player.name}</div>`;
+                    });
+                    
+                    playerList.innerHTML = html;
+                    
+                    if (playerCount === 2) {
+                        waitingMessage.textContent = 'Game Ready! Starting...';
+                        setTimeout(() => {
+                            this.startOnlineGame();
+                        }, 2000);
+                    }
+                }
+            }
+
+            async updateGameState(gameState) {
+                if (!this.isOnlineGame || !this.gameRef) return;
+                
+                try {
+                    await this.gameRef.update(gameState);
+                } catch (error) {
+                    console.error('Error updating game state:', error);
+                }
+            }
+
+            startOnlineGame() {
+                document.getElementById('online-selection').style.display = 'none';
+                document.getElementById('change-mode').style.display = 'block';
+                
+                // Update UI for online game
+                if (this.playerNumber === 0) {
+                    document.getElementById('player2-title').textContent = 'Player 2 (Yellow) - Online';
+                } else {
+                    document.getElementById('player2-title').textContent = 'Player 1 (Green) - Online';
+                }
+                
+                game.gameMode = 'online';
+                game.onlineManager = this;
+                render();
+                animate();
+            }
+
+            leaveRoom() {
+                if (this.roomRef && this.playerId) {
+                    this.playersRef.child(this.playerId).remove();
+                    this.roomRef.off();
+                    this.gameRef.off();
+                    this.playersRef.off();
+                }
+                
+                this.roomId = null;
+                this.playerId = null;
+                this.playerNumber = null;
+                this.isHost = false;
+                this.isOnlineGame = false;
+                this.roomRef = null;
+                this.gameRef = null;
+                this.playersRef = null;
+            }
+        }
+
+        const onlineManager = new OnlineGameManager();
+
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
         const positions = [
@@ -443,10 +1023,11 @@
         ];
 
         class Game {
-            constructor() {
+            constructor(gameMode = 'computer') {
+                this.gameMode = gameMode;
                 this.board = Array(24).fill(null);
-                this.playerPiecesLeft = 9;
-                this.computerPiecesLeft = 9;
+                this.playerPiecesLeft = 11;
+                this.computerPiecesLeft = 11;
                 this.playerCaptured = 0;
                 this.computerCaptured = 0;
                 this.phase = 'placement';
@@ -463,6 +1044,32 @@
                 this.timer = null;
                 this.timeLeft = 20;
                 this.possibleMoves = [];
+                this.onlineManager = null;
+            }
+
+            async syncGameState() {
+                if (this.gameMode === 'online' && this.onlineManager) {
+                    const gameState = {
+                        board: this.board,
+                        turn: this.turn,
+                        phase: this.phase,
+                        playerPiecesLeft: this.playerPiecesLeft,
+                        computerPiecesLeft: this.computerPiecesLeft,
+                        playerCaptured: this.playerCaptured,
+                        computerCaptured: this.computerCaptured,
+                        millsToRemove: this.millsToRemove,
+                        winner: this.winner,
+                        restrictedMills: this.restrictedMills
+                    };
+                    await this.onlineManager.updateGameState(gameState);
+                }
+            }
+
+            isMyTurn() {
+                if (this.gameMode !== 'online' || !this.onlineManager) {
+                    return this.turn === 0; // Local game, always player 1's perspective
+                }
+                return this.turn === this.onlineManager.playerNumber;
             }
 
             getPieces(player) {
@@ -488,7 +1095,7 @@
                 return mills.filter(m => m.every(pos => this.board[pos] === player));
             }
 
-            placePiece(pos, player) {
+            async placePiece(pos, player) {
                 if (this.board[pos] !== null) return false;
                 const oldMills = this.getAllMills(player);
                 this.board[pos] = player;
@@ -521,10 +1128,15 @@
                     document.getElementById('phase-indicator').textContent = 'Movement';
                 }
                 
+                // Sync with Firebase for online games
+                if (this.gameMode === 'online') {
+                    await this.syncGameState();
+                }
+                
                 return true;
             }
 
-            movePiece(fromPos, toPos, player) {
+            async movePiece(fromPos, toPos, player) {
                 if (this.board[fromPos] !== player || this.board[toPos] !== null || !adj[fromPos].includes(toPos)) return false;
                 
                 // Check if this move would violate the mill restriction
@@ -567,6 +1179,11 @@
                 // Track the last move
                 this.lastMoveFromPos[player] = fromPos;
                 
+                // Sync with Firebase for online games
+                if (this.gameMode === 'online') {
+                    await this.syncGameState();
+                }
+                
                 return true;
             }
 
@@ -585,7 +1202,7 @@
                 return true;
             }
 
-            removePiece(pos, player) {
+            async removePiece(pos, player) {
                 const opponent = 1 - player;
                 if (this.board[pos] !== opponent) return false;
                 
@@ -607,6 +1224,12 @@
                     }
                     
                     this.checkWin();
+                    
+                    // Sync with Firebase for online games
+                    if (this.gameMode === 'online') {
+                        await this.syncGameState();
+                    }
+                    
                     return true;
                 }
                 
@@ -617,16 +1240,16 @@
                 // Player wins if computer has 2 or fewer pieces left
                 if (this.countPiecesOnBoard(1) <= 2 && this.computerPiecesLeft === 0) {
                     this.winner = 0;
-                    document.getElementById('winner-text').textContent = 'Player Wins!';
+                    document.getElementById('winner-text').textContent = 'Player 1 Wins!';
                     document.getElementById('winner-banner').style.display = 'block';
                     this.stopTimer();
                     return;
                 }
                 
-                // Computer wins if player has 2 or fewer pieces left
+                // Computer/Player 2 wins if player has 2 or fewer pieces left
                 if (this.countPiecesOnBoard(0) <= 2 && this.playerPiecesLeft === 0) {
                     this.winner = 1;
-                    document.getElementById('winner-text').textContent = 'Computer Wins!';
+                    document.getElementById('winner-text').textContent = this.gameMode === 'computer' ? 'Computer Wins!' : 'Player 2 Wins!';
                     document.getElementById('winner-banner').style.display = 'block';
                     this.stopTimer();
                     return;
@@ -636,7 +1259,7 @@
                 const currentPlayer = this.turn;
                 if (this.phase === 'movement' && !this.hasMoves(currentPlayer)) {
                     this.winner = 1 - currentPlayer;
-                    document.getElementById('winner-text').textContent = this.winner === 0 ? 'Player Wins!' : 'Computer Wins!';
+                    document.getElementById('winner-text').textContent = this.winner === 0 ? 'Player 1 Wins!' : (this.gameMode === 'computer' ? 'Computer Wins!' : 'Player 2 Wins!');
                     document.getElementById('winner-banner').style.display = 'block';
                     this.stopTimer();
                 }
@@ -655,13 +1278,30 @@
                     if (this.timeLeft <= 0) {
                         this.stopTimer();
                         if (this.turn === 0) {
-                            // Player time out - computer's turn
-                            this.showInfoMessage("Time's up! Computer's turn now.");
-                            this.turn = 1;
-                            // Use setTimeout to allow the message to be displayed before computer plays
-                            setTimeout(() => {
-                                this.playComputerTurn();
-                            }, 1500);
+                            // Player 1 time out
+                            if (this.gameMode === 'computer') {
+                                this.showInfoMessage("Time's up! Computer's turn now.");
+                                this.turn = 1;
+                                // Use setTimeout to allow the message to be displayed before computer plays
+                                setTimeout(() => {
+                                    this.playComputerTurn();
+                                }, 1500);
+                            } else {
+                                this.showInfoMessage("Time's up! Player 2's turn now.");
+                                this.turn = 1;
+                                render();
+                            }
+                        } else {
+                            // Player 2/Computer time out
+                            if (this.gameMode === 'computer') {
+                                this.showInfoMessage("Time's up! Player's turn now.");
+                                this.turn = 0;
+                                render();
+                            } else {
+                                this.showInfoMessage("Time's up! Player 1's turn now.");
+                                this.turn = 0;
+                                render();
+                            }
                         }
                     }
                 }, 1000);
@@ -696,8 +1336,8 @@
 
             reset() {
                 this.board = Array(24).fill(null);
-                this.playerPiecesLeft = 9;
-                this.computerPiecesLeft = 9;
+                this.playerPiecesLeft = 11;
+                this.computerPiecesLeft = 11;
                 this.playerCaptured = 0;
                 this.computerCaptured = 0;
                 this.phase = 'placement';
@@ -715,20 +1355,20 @@
                 this.stopTimer();
                 
                 document.getElementById('phase-indicator').textContent = 'Placement';
-                document.getElementById('player-available').textContent = '9';
-                document.getElementById('computer-available').textContent = '9';
+                document.getElementById('player-available').textContent = '11';
+                document.getElementById('computer-available').textContent = '11';
                 document.getElementById('player-winning').textContent = '0';
                 document.getElementById('computer-winning').textContent = '0';
-                document.getElementById('turn-indicator').textContent = "Player's Turn";
+                document.getElementById('turn-indicator').textContent = "Player 1's Turn";
                 document.getElementById('turn-indicator').className = 'turn-indicator player1-turn';
                 document.getElementById('winner-banner').style.display = 'none';
                 document.getElementById('instruction-box').textContent = "Select a place to put your coin";
                 
                 // Reset coin displays
                 document.getElementById('player-coins').innerHTML = 
-                    '<div class="coin"></div>'.repeat(9);
+                    '<div class="coin"></div>'.repeat(11);
                 document.getElementById('computer-coins').innerHTML = 
-                    '<div class="coin"></div>'.repeat(9);
+                    '<div class="coin"></div>'.repeat(11);
             }
             
             playComputerTurn() {
@@ -1018,10 +1658,10 @@
                 }
             }
             
-            // Draw points
+            // Draw points - reduced by 20% (from 25px to 20px radius)
             for (let pos of positions) {
                 ctx.beginPath();
-                ctx.arc(pos[0], pos[1], 25, 0, Math.PI * 2);
+                ctx.arc(pos[0], pos[1], 15, 0, Math.PI * 2); // Reduced from 25 to 20
                 ctx.fillStyle = '#1a3a5f';
                 ctx.fill();
                 ctx.strokeStyle = '#4fc3f7';
@@ -1033,16 +1673,16 @@
         function drawPieces() {
             for (let i = 0; i < 24; i++) {
                 if (game.board[i] !== null) {
-                    // Draw coin shadow
+                    // Draw coin shadow - reduced by 20%
                     ctx.beginPath();
-                    ctx.arc(positions[i][0] + 2, positions[i][1] + 2, 14, 0, Math.PI * 2); // Reduced by 30%
+                    ctx.arc(positions[i][0] + 2, positions[i][1] + 2, 11.2, 0, Math.PI * 2); // Reduced from 14 to 11.2
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                     ctx.fill();
                     
-                    // Draw coin
+                    // Draw coin - reduced by 20%
                     const gradient = ctx.createRadialGradient(
-                        positions[i][0] - 3.5, positions[i][1] - 3.5, 3.5, // Reduced by 30%
-                        positions[i][0], positions[i][1], 14 // Reduced by 30%
+                        positions[i][0] - 2.8, positions[i][1] - 2.8, 2.8, // Reduced from -3.5, -3.5, 3.5
+                        positions[i][0], positions[i][1], 11.2 // Reduced from 14 to 11.2
                     );
                     
                     if (game.board[i] === 0) {
@@ -1056,39 +1696,39 @@
                     }
                     
                     ctx.beginPath();
-                    ctx.arc(positions[i][0], positions[i][1], 14, 0, Math.PI * 2); // Reduced by 30%
+                    ctx.arc(positions[i][0], positions[i][1], 11.2, 0, Math.PI * 2); // Reduced from 14 to 11.2
                     ctx.fillStyle = gradient;
                     ctx.fill();
                     
-                    // Draw coin border
+                    // Draw coin border - reduced by 20%
                     ctx.strokeStyle = game.board[i] === 0 ? '#2e7d32' : '#ff8f00';
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             }
             
-            // Draw selected coin highlight
+            // Draw selected coin highlight - reduced by 20%
             if (game.selected !== null) {
                 ctx.beginPath();
-                ctx.arc(positions[game.selected][0], positions[game.selected][1], 17.5, 0, Math.PI * 2); // Reduced by 30%
+                ctx.arc(positions[game.selected][0], positions[game.selected][1], 14, 0, Math.PI * 2); // Reduced from 17.5 to 14
                 ctx.strokeStyle = '#ff5252';
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 
-                // Draw possible moves (changed from blue to magenta)
+                // Draw possible moves (changed from blue to magenta) - reduced by 20%
                 if (game.phase === 'movement') {
                     game.possibleMoves = adj[game.selected].filter(pos => game.board[pos] === null);
                     
                     for (let pos of game.possibleMoves) {
                         ctx.beginPath();
-                        ctx.arc(positions[pos][0], positions[pos][1], 12.6, 0, Math.PI * 2); // Reduced by 30%
-                        ctx.fillStyle = 'rgba(255, 0, 255, 0.6)'; // Magenta color
+                        ctx.arc(positions[pos][0], positions[pos][1], 10.08, 0, Math.PI * 2); // Reduced from 12.6 to 10.08
+                        ctx.fillStyle = 'rgba(255, 0, 255, 0.6)';
                         ctx.fill();
                     }
                 }
             }
             
-            // Draw mill highlight
+            // Draw mill highlight - reduced by 20%
             if (game.flashTimer > 0) {
                 const flash = Math.floor(game.flashTimer / 10) % 2 === 0;
                 if (flash) {
@@ -1097,7 +1737,7 @@
                     for (let m of game.highlightMills) {
                         for (let p of m) {
                             ctx.beginPath();
-                            ctx.arc(positions[p][0], positions[p][1], 19.6, 0, Math.PI * 2); // Reduced by 30%
+                            ctx.arc(positions[p][0], positions[p][1], 15.68, 0, Math.PI * 2); // Reduced from 19.6 to 15.68
                             ctx.stroke();
                         }
                     }
@@ -1119,11 +1759,15 @@
             
             const turnIndicator = document.getElementById('turn-indicator');
             if (game.turn === 0) {
-                turnIndicator.textContent = "Player's Turn";
+                turnIndicator.textContent = "Player 1's Turn";
                 turnIndicator.className = 'turn-indicator player1-turn';
                 game.startTimer();
             } else {
-                turnIndicator.textContent = "Computer's Turn";
+                if (game.gameMode === 'computer') {
+                    turnIndicator.textContent = "Computer's Turn";
+                } else {
+                    turnIndicator.textContent = "Player 2's Turn";
+                }
                 turnIndicator.className = 'turn-indicator player2-turn';
                 game.stopTimer();
             }
@@ -1133,13 +1777,45 @@
             // Update instruction message
             const instructionBox = document.getElementById('instruction-box');
             if (game.millsToRemove > 0) {
-                instructionBox.textContent = "Remove one of computer's coins";
+                if (game.turn === 0) {
+                    instructionBox.textContent = "Remove one of opponent's coins";
+                } else {
+                    if (game.gameMode === 'computer') {
+                        instructionBox.textContent = "Computer is removing your coin";
+                    } else {
+                        instructionBox.textContent = "Player 2 is removing your coin";
+                    }
+                }
             } else if (game.phase === 'placement') {
-                instructionBox.textContent = "Select a place to put your coin";
+                if (game.turn === 0) {
+                    instructionBox.textContent = "Select a place to put your coin";
+                } else {
+                    if (game.gameMode === 'computer') {
+                        instructionBox.textContent = "Computer is placing a coin";
+                    } else {
+                        instructionBox.textContent = "Player 2's turn to place a coin";
+                    }
+                }
             } else if (game.selected === null) {
-                instructionBox.textContent = "Select one coin to slide to adjacent place";
+                if (game.turn === 0) {
+                    instructionBox.textContent = "Select one coin to slide to adjacent place";
+                } else {
+                    if (game.gameMode === 'computer') {
+                        instructionBox.textContent = "Computer is selecting a coin";
+                    } else {
+                        instructionBox.textContent = "Player 2's turn to select a coin";
+                    }
+                }
             } else {
-                instructionBox.textContent = "Select an adjacent empty spot to move";
+                if (game.turn === 0) {
+                    instructionBox.textContent = "Select an adjacent empty spot to move";
+                } else {
+                    if (game.gameMode === 'computer') {
+                        instructionBox.textContent = "Computer is moving a coin";
+                    } else {
+                        instructionBox.textContent = "Player 2's turn to move a coin";
+                    }
+                }
             }
         }
 
@@ -1158,8 +1834,11 @@
             animationFrame = requestAnimationFrame(animate);
         }
 
-        function handleInteraction(e) {
-            if (game.turn !== 0 || game.winner !== null) return;
+        async function handleInteraction(e) {
+            // Check if it's player's turn for online games
+            if (game.gameMode === 'online' && !game.isMyTurn()) return;
+            if (game.turn !== 0 && game.gameMode === 'computer') return;
+            if (game.winner !== null) return;
             
             // Prevent default behavior for touch events to avoid scrolling
             if (e.type === 'touchstart' || e.type === 'touchmove') {
@@ -1171,40 +1850,56 @@
             if (clicked === null) return;
 
             if (game.millsToRemove > 0) {
-                if (game.removePiece(clicked, 0)) {
+                if (await game.removePiece(clicked, game.turn)) {
                     game.millsToRemove -= 1;
                     if (game.millsToRemove === 0) {
-                        game.turn = 1;
-                        game.playComputerTurn();
+                        if (game.gameMode === 'computer') {
+                            game.turn = 1;
+                            game.playComputerTurn();
+                        } else if (game.gameMode === 'online') {
+                            game.turn = 1 - game.turn;
+                            await game.syncGameState();
+                        } else {
+                            game.turn = 1 - game.turn;
+                        }
                     }
                     render();
                 } else {
                     game.showFoulWarning("You can only remove coins not in mills!");
                 }
             } else {
-                if (!game.playerCanMove) {
+                if ((game.turn === 0 && !game.playerCanMove) || (game.turn === 1 && !game.computerCanMove)) {
                     // Placement phase
-                    if (game.playerPiecesLeft > 0 && game.placePiece(clicked, 0)) {
-                        if (game.millsToRemove === 0) {
-                            game.turn = 1;
-                            game.playComputerTurn();
+                    if ((game.turn === 0 && game.playerPiecesLeft > 0) || (game.turn === 1 && game.computerPiecesLeft > 0)) {
+                        if (await game.placePiece(clicked, game.turn)) {
+                            if (game.millsToRemove === 0) {
+                                if (game.gameMode === 'computer') {
+                                    game.turn = 1;
+                                    game.playComputerTurn();
+                                } else if (game.gameMode === 'online') {
+                                    game.turn = 1 - game.turn;
+                                    await game.syncGameState();
+                                } else {
+                                    game.turn = 1 - game.turn;
+                                }
+                            }
+                            render();
+                        } else {
+                            game.showFoulWarning("Invalid placement! Try another position.");
                         }
-                        render();
-                    } else {
-                        game.showFoulWarning("Invalid placement! Try another position.");
                     }
                 } else {
                     // Movement phase
-                    if (!game.hasMoves(0)) {
-                        game.winner = 1;
-                        document.getElementById('winner-text').textContent = 'Computer Wins!';
+                    if (!game.hasMoves(game.turn)) {
+                        game.winner = 1 - game.turn;
+                        document.getElementById('winner-text').textContent = game.winner === 0 ? 'Player 1 Wins!' : (this.gameMode === 'computer' ? 'Computer Wins!' : 'Player 2 Wins!');
                         document.getElementById('winner-banner').style.display = 'block';
                         render();
                         return;
                     }
                     
                     if (game.selected === null) {
-                        if (game.board[clicked] === 0) {
+                        if (game.board[clicked] === game.turn) {
                             game.selected = clicked;
                             render();
                         } else {
@@ -1212,17 +1907,17 @@
                         }
                     } else {
                         // Check if this move would violate the mill restriction
-                        if (game.restrictedMills[0]) {
-                            const restrictedMill = game.restrictedMills[0];
+                        if (game.restrictedMills[game.turn]) {
+                            const restrictedMill = game.restrictedMills[game.turn];
                             if (restrictedMill.includes(game.selected)) {
                                 // Check if moving this coin would reform the same mill
                                 const tempBoard = [...game.board];
                                 tempBoard[game.selected] = null;
-                                tempBoard[clicked] = 0;
+                                tempBoard[clicked] = game.turn;
                                 
                                 const wouldReformMill = mills.some(mill => {
                                     if (!game.arraysEqual(mill, restrictedMill)) return false;
-                                    return mill.every(pos => tempBoard[pos] === 0);
+                                    return mill.every(pos => tempBoard[pos] === game.turn);
                                 });
                                 
                                 if (wouldReformMill) {
@@ -1234,11 +1929,18 @@
                             }
                         }
                         
-                        if (game.movePiece(game.selected, clicked, 0)) {
+                        if (await game.movePiece(game.selected, clicked, game.turn)) {
                             game.selected = null;
                             if (game.millsToRemove === 0) {
-                                game.turn = 1;
-                                game.playComputerTurn();
+                                if (game.gameMode === 'computer') {
+                                    game.turn = 1;
+                                    game.playComputerTurn();
+                                } else if (game.gameMode === 'online') {
+                                    game.turn = 1 - game.turn;
+                                    await game.syncGameState();
+                                } else {
+                                    game.turn = 1 - game.turn;
+                                }
                             }
                             render();
                         } else {
@@ -1255,6 +1957,97 @@
         canvas.addEventListener('click', handleInteraction);
         canvas.addEventListener('touchstart', handleInteraction, { passive: false });
 
+        function startGame(mode) {
+            game = new Game(mode);
+            document.getElementById('mode-selection').style.display = 'none';
+            document.getElementById('change-mode').style.display = 'block';
+            
+            if (mode === 'computer') {
+                document.getElementById('player2-title').textContent = 'Computer (Yellow)';
+            } else {
+                document.getElementById('player2-title').textContent = 'Player 2 (Yellow)';
+            }
+            
+            render();
+            animate();
+        }
+
+        document.getElementById('play-computer').addEventListener('click', () => {
+            startGame('computer');
+        });
+
+        document.getElementById('play-player2').addEventListener('click', () => {
+            startGame('player2');
+        });
+
+        document.getElementById('play-online').addEventListener('click', () => {
+            document.getElementById('mode-selection').style.display = 'none';
+            document.getElementById('online-selection').style.display = 'flex';
+        });
+
+        document.getElementById('back-to-modes').addEventListener('click', () => {
+            document.getElementById('online-selection').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'flex';
+            onlineManager.leaveRoom();
+        });
+
+        document.getElementById('create-room').addEventListener('click', async () => {
+            try {
+                const roomCode = await onlineManager.createRoom();
+                document.getElementById('room-code').textContent = `Room Code: ${roomCode}`;
+                document.getElementById('room-info').style.display = 'block';
+                document.querySelector('.mode-buttons').style.display = 'none';
+            } catch (error) {
+                alert('Error creating room: ' + error.message);
+            }
+        });
+
+        document.getElementById('join-room').addEventListener('click', () => {
+            document.getElementById('join-room-input').style.display = 'block';
+            document.querySelector('.mode-buttons').style.display = 'none';
+        });
+
+        document.getElementById('cancel-join').addEventListener('click', () => {
+            document.getElementById('join-room-input').style.display = 'none';
+            document.querySelector('.mode-buttons').style.display = 'block';
+        });
+
+        document.getElementById('join-room-btn').addEventListener('click', async () => {
+            const roomCode = document.getElementById('room-code-input').value.trim();
+            if (!roomCode) {
+                alert('Please enter a room code');
+                return;
+            }
+
+            // Show loading state
+            const joinBtn = document.getElementById('join-room-btn');
+            const originalText = joinBtn.textContent;
+            joinBtn.textContent = 'Joining...';
+            joinBtn.disabled = true;
+
+            try {
+                console.log('Attempting to join room:', roomCode);
+                await onlineManager.joinRoom(roomCode);
+                console.log('Successfully joined room');
+                document.getElementById('room-code').textContent = `Room Code: ${roomCode}`;
+                document.getElementById('room-info').style.display = 'block';
+                document.getElementById('join-room-input').style.display = 'none';
+            } catch (error) {
+                console.error('Join room error:', error);
+                alert('Error joining room: ' + error.message);
+                // Reset button state
+                joinBtn.textContent = originalText;
+                joinBtn.disabled = false;
+            }
+        });
+
+        // Allow Enter key to join room
+        document.getElementById('room-code-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('join-room-btn').click();
+            }
+        });
+
         document.getElementById('new-game').addEventListener('click', () => {
             cancelAnimationFrame(animationFrame);
             game.reset();
@@ -1267,6 +2060,17 @@
             game.reset();
             render();
             animate();
+        });
+
+        document.getElementById('change-mode').addEventListener('click', () => {
+            cancelAnimationFrame(animationFrame);
+            document.getElementById('mode-selection').style.display = 'flex';
+            document.getElementById('change-mode').style.display = 'none';
+            
+            // Leave online room if in online game
+            if (game.gameMode === 'online') {
+                onlineManager.leaveRoom();
+            }
         });
 
         const rulesModal = document.getElementById('rules-modal');
@@ -1287,9 +2091,7 @@
             modalOverlay.style.display = 'none';
         });
 
-        // Initialize the game
-        render();
-        animate();
+        // Game initialization is now handled by authentication flow
+        // Mode selection will be shown after successful login
     </script>
-</body>
 </html>
