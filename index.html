@@ -774,8 +774,22 @@
                 game.winner = gameData.winner || null;
                 game.restrictedMills = gameData.restrictedMills || { 0: null, 1: null };
 
-                game.playerCanMove = game.playerPiecesLeft === 0;
-                game.computerCanMove = game.computerPiecesLeft === 0;
+                // For online games, use player-specific piece tracking
+                if (this.isOnlineGame) {
+                    // Player 0 (host) perspective
+                    if (this.playerNumber === 0) {
+                        game.playerCanMove = game.playerPiecesLeft === 0;
+                        game.computerCanMove = game.computerPiecesLeft === 0;
+                    } 
+                    // Player 1 (joiner) perspective  
+                    else {
+                        game.playerCanMove = game.computerPiecesLeft === 0;
+                        game.computerCanMove = game.playerPiecesLeft === 0;
+                    }
+                } else {
+                    game.playerCanMove = game.playerPiecesLeft === 0;
+                    game.computerCanMove = game.computerPiecesLeft === 0;
+                }
                 
                 // Update phase indicator
                 if (game.phase === 'movement') {
