@@ -1733,10 +1733,14 @@
         }
 
         async function handleInteraction(e) {
-            // Check if it's player's turn for online games
-            if (game.gameMode === 'online' && !game.isMyTurn()) return;
-            if (game.turn !== 0 && game.gameMode === 'computer') return;
+            // Check if it's player's turn
             if (game.winner !== null) return;
+            
+            // For computer mode, only allow interaction on player's turn
+            if (game.gameMode === 'computer' && game.turn !== 0) return;
+            
+            // For online mode, only allow interaction on player's turn
+            if (game.gameMode === 'online' && !game.isMyTurn()) return;
             
             // Prevent default behavior for touch events to avoid scrolling
             if (e.type === 'touchstart' || e.type === 'touchmove') {
