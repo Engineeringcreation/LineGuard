@@ -899,6 +899,32 @@
                 this.timer = null;
                 this.timeLeft = 20;
                 this.possibleMoves = [];
+                this.onlineManager = null;
+            }
+
+            async syncGameState() {
+                if (this.gameMode === 'online' && this.onlineManager) {
+                    const gameState = {
+                        board: this.board,
+                        turn: this.turn,
+                        phase: this.phase,
+                        playerPiecesLeft: this.playerPiecesLeft,
+                        computerPiecesLeft: this.computerPiecesLeft,
+                        playerCaptured: this.playerCaptured,
+                        computerCaptured: this.computerCaptured,
+                        millsToRemove: this.millsToRemove,
+                        winner: this.winner,
+                        restrictedMills: this.restrictedMills
+                    };
+                    await this.onlineManager.updateGameState(gameState);
+                }
+            }
+
+            isMyTurn() {
+                if (this.gameMode !== 'online' || !this.onlineManager) {
+                    return this.turn === 0; // Local game, always player 1's perspective
+                }
+                return this.turn === this.onlineManager.playerNumber;
             }
 
             getPieces(player) {
@@ -924,7 +950,7 @@
                 return mills.filter(m => m.every(pos => this.board[pos] === player));
             }
 
-            placePiece(pos, player) {
+            async placePiece(pos, player) {
                 if (this.board[pos] !== null) return false;
                 const oldMills = this.getAllMills(player);
                 this.board[pos] = player;
@@ -957,10 +983,15 @@
                     document.getElementById('phase-indicator').textContent = 'Movement';
                 }
                 
+                // Sync with Firebase for online games
+                if (this.gameMode === 'online') {
+                    await this.syncGameState();
+                }
+                
                 return true;
             }
 
-            movePiece(fromPos, toPos, player) {
+            async movePiece(fromPos, toPos, player) {
                 if (this.board[fromPos] !== player || this.board[toPos] !== null || !adj[fromPos].includes(toPos)) return false;
                 
                 // Check if this move would violate the mill restriction
@@ -1003,6 +1034,11 @@
                 // Track the last move
                 this.lastMoveFromPos[player] = fromPos;
                 
+                // Sync with Firebase for online games
+                if (this.gameMode === 'online') {
+                    await this.syncGameState();
+                }
+                
                 return true;
             }
 
@@ -1021,7 +1057,7 @@
                 return true;
             }
 
-            removePiece(pos, player) {
+            async removePiece(pos, player) {
                 const opponent = 1 - player;
                 if (this.board[pos] !== opponent) return false;
                 
@@ -1043,6 +1079,12 @@
                     }
                     
                     this.checkWin();
+                    
+                    // Sync with Firebase for online games
+                    if (this.gameMode === 'online') {
+                        await this.syncGameState();
+                    }
+                    
                     return true;
                 }
                 
@@ -1647,7 +1689,9 @@
             animationFrame = requestAnimationFrame(animate);
         }
 
-        function handleInteraction(e) {
+        async function handleInteraction(e) {
+            // Check if it's player's turn for online games
+            if (game.gameMode === 'online' && !game.isMyTurn()) return;
             if (game.turn !== 0 && game.gameMode === 'computer') return;
             if (game.winner !== null) return;
             
@@ -1661,12 +1705,15 @@
             if (clicked === null) return;
 
             if (game.millsToRemove > 0) {
-                if (game.removePiece(clicked, game.turn)) {
+                if (await game.removePiece(clicked, game.turn)) {
                     game.millsToRemove -= 1;
                     if (game.millsToRemove === 0) {
                         if (game.gameMode === 'computer') {
                             game.turn = 1;
                             game.playComputerTurn();
+                        } else if (game.gameMode === 'online') {
+                            game.turn = 1 - game.turn;
+                            await game.syncGameState();
                         } else {
                             game.turn = 1 - game.turn;
                         }
@@ -1679,11 +1726,14 @@
                 if ((game.turn === 0 && !game.playerCanMove) || (game.turn === 1 && !game.computerCanMove)) {
                     // Placement phase
                     if ((game.turn === 0 && game.playerPiecesLeft > 0) || (game.turn === 1 && game.computerPiecesLeft > 0)) {
-                        if (game.placePiece(clicked, game.turn)) {
+                        if (await game.placePiece(clicked, game.turn)) {
                             if (game.millsToRemove === 0) {
                                 if (game.gameMode === 'computer') {
                                     game.turn = 1;
                                     game.playComputerTurn();
+                                } else if (game.gameMode === 'online') {
+                                    game.turn = 1 - game.turn;
+                                    await game.syncGameState();
                                 } else {
                                     game.turn = 1 - game.turn;
                                 }
@@ -1734,12 +1784,15 @@
                             }
                         }
                         
-                        if (game.movePiece(game.selected, clicked, game.turn)) {
+                        if (await game.movePiece(game.selected, clicked, game.turn)) {
                             game.selected = null;
                             if (game.millsToRemove === 0) {
                                 if (game.gameMode === 'computer') {
                                     game.turn = 1;
                                     game.playComputerTurn();
+                                } else if (game.gameMode === 'online') {
+                                    game.turn = 1 - game.turn;
+                                    await game.syncGameState();
                                 } else {
                                     game.turn = 1 - game.turn;
                                 }
