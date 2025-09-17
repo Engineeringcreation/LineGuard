@@ -404,7 +404,6 @@
         <h2>Select Game Mode</h2>
         <div class="mode-buttons">
             <button id="play-computer">Play with Computer</button>
-            <button id="play-player2">Play with Player 2 (Local)</button>
             <button id="play-online">Play Online</button>
         </div>
     </div>
@@ -1143,10 +1142,10 @@
                     return;
                 }
                 
-                // Computer/Player 2 wins if player has 2 or fewer pieces left
+                // Computer wins if player has 2 or fewer pieces left
                 if (this.countPiecesOnBoard(0) <= 2 && this.playerPiecesLeft === 0) {
                     this.winner = 1;
-                    document.getElementById('winner-text').textContent = this.gameMode === 'computer' ? 'Computer Wins!' : 'Player 2 Wins!';
+                    document.getElementById('winner-text').textContent = 'Computer Wins!';
                     document.getElementById('winner-banner').style.display = 'block';
                     this.stopTimer();
                     return;
@@ -1156,7 +1155,7 @@
                 const currentPlayer = this.turn;
                 if (this.phase === 'movement' && !this.hasMoves(currentPlayer)) {
                     this.winner = 1 - currentPlayer;
-                    document.getElementById('winner-text').textContent = this.winner === 0 ? 'Player 1 Wins!' : (this.gameMode === 'computer' ? 'Computer Wins!' : 'Player 2 Wins!');
+                    document.getElementById('winner-text').textContent = this.winner === 0 ? 'Player 1 Wins!' : 'Computer Wins!';
                     document.getElementById('winner-banner').style.display = 'block';
                     this.stopTimer();
                 }
@@ -1176,29 +1175,17 @@
                         this.stopTimer();
                         if (this.turn === 0) {
                             // Player 1 time out
-                            if (this.gameMode === 'computer') {
-                                this.showInfoMessage("Time's up! Computer's turn now.");
-                                this.turn = 1;
-                                // Use setTimeout to allow the message to be displayed before computer plays
-                                setTimeout(() => {
-                                    this.playComputerTurn();
-                                }, 1500);
-                            } else {
-                                this.showInfoMessage("Time's up! Player 2's turn now.");
-                                this.turn = 1;
-                                render();
-                            }
+                            this.showInfoMessage("Time's up! Computer's turn now.");
+                            this.turn = 1;
+                            // Use setTimeout to allow the message to be displayed before computer plays
+                            setTimeout(() => {
+                                this.playComputerTurn();
+                            }, 1500);
                         } else {
-                            // Player 2/Computer time out
-                            if (this.gameMode === 'computer') {
-                                this.showInfoMessage("Time's up! Player's turn now.");
-                                this.turn = 0;
-                                render();
-                            } else {
-                                this.showInfoMessage("Time's up! Player 1's turn now.");
-                                this.turn = 0;
-                                render();
-                            }
+                            // Computer time out
+                            this.showInfoMessage("Time's up! Player's turn now.");
+                            this.turn = 0;
+                            render();
                         }
                     }
                 }, 1000);
@@ -1782,8 +1769,6 @@
                                     setTimeout(async () => {
                                         await game.syncGameState();
                                     }, 100);
-                                } else {
-                                    game.turn = 1 - game.turn;
                                 }
                             }
                             render();
@@ -1868,11 +1853,11 @@
             document.getElementById('mode-selection').style.display = 'none';
             document.getElementById('change-mode').style.display = 'block';
             
+            // Only computer mode needs special handling for the title
             if (mode === 'computer') {
                 document.getElementById('player2-title').textContent = 'Computer (Yellow)';
-            } else {
-                document.getElementById('player2-title').textContent = 'Player 2 (Yellow)';
             }
+            // Online mode title is handled separately in onlineManager.startOnlineGame()
             
             render();
             animate();
@@ -1882,9 +1867,7 @@
             startGame('computer');
         });
 
-        document.getElementById('play-player2').addEventListener('click', () => {
-            startGame('player2');
-        });
+
 
         document.getElementById('new-game').addEventListener('click', () => {
             cancelAnimationFrame(animationFrame);
