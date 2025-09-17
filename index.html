@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mill Guard - Online Multiplayer</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <title>Mill Guard - Fixed Version</title>
     <style>
         * {
             margin: 0;
@@ -322,33 +318,6 @@
             padding: 20px 40px;
             font-size: 1.5rem;
         }
-        
-        .login-options {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-        
-        .google-btn {
-            background: white;
-            color: #333;
-            border: 2px solid #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        
-        .google-btn:hover {
-            background: #f8f9fa;
-            border-color: #4285f4;
-            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
-        }
-        
-        /* Anonymous button styles removed */
         @media (max-width: 900px) {
             .game-container {
                 flex-direction: column;
@@ -382,52 +351,11 @@
     </style>
 </head>
 <body>
-    <div class="mode-selection" id="login-screen">
-        <h2>Welcome to Mill Guard</h2>
-        <div class="login-options">
-            <button id="google-signin" class="google-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px;">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Sign in with Google
-            </button>
-        </div>
-        <div id="user-info" style="display: none; margin-top: 20px; text-align: center;">
-            <img id="user-photo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;" />
-            <div id="user-name" style="font-size: 1.2rem; margin-bottom: 10px;"></div>
-            <button id="sign-out" style="background: #dc3545; font-size: 0.9rem; padding: 8px 16px;">Sign Out</button>
-        </div>
-    </div>
-
-    <div class="mode-selection" id="mode-selection" style="display: none;">
+    <div class="mode-selection" id="mode-selection">
         <h2>Select Game Mode</h2>
         <div class="mode-buttons">
             <button id="play-computer">Play with Computer</button>
-            <button id="play-player2">Play with Player 2 (Local)</button>
-            <button id="play-online">Play Online</button>
-        </div>
-    </div>
-
-    <div class="mode-selection" id="online-selection" style="display: none;">
-        <h2>Online Multiplayer</h2>
-        <div class="mode-buttons">
-            <button id="create-room">Create Room</button>
-            <button id="join-room">Join Room</button>
-            <button id="back-to-modes">Back</button>
-        </div>
-        <div id="room-info" style="display: none; margin-top: 20px; text-align: center;">
-            <div id="room-code" style="font-size: 1.5rem; margin-bottom: 10px;"></div>
-            <div id="waiting-message" style="color: #4fc3f7;">Waiting for opponent...</div>
-            <div id="player-list" style="margin-top: 15px;"></div>
-        </div>
-        <div id="join-room-input" style="display: none; margin-top: 20px; text-align: center;">
-            <input type="text" id="room-code-input" placeholder="Enter Room Code" style="padding: 10px; font-size: 1.2rem; margin-bottom: 15px; border-radius: 5px; border: none;">
-            <br>
-            <button id="join-room-btn">Join Room</button>
-            <button id="cancel-join">Cancel</button>
+            <button id="play-player2">Play with Player 2</button>
         </div>
     </div>
 
@@ -540,460 +468,6 @@
     </div>
 
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDQQRMUoQBLzUrjUGY-9ltNXanMfjOlxY0",
-            authDomain: "livemint-a267f.firebaseapp.com",
-            databaseURL: "https://livemint-a267f-default-rtdb.firebaseio.com",
-            projectId: "livemint-a267f",
-            storageBucket: "livemint-a267f.firebasestorage.app",
-            messagingSenderId: "103746520614",
-            appId: "1:103746520614:web:c2866a8e884783307788e7",
-            measurementId: "G-46SMPLSVL6"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
-
-        // Authentication Manager
-        class AuthManager {
-            constructor() {
-                this.currentUser = null;
-                this.isAuthenticated = false;
-                this.googleProvider = new firebase.auth.GoogleAuthProvider();
-                this.googleProvider.addScope('profile');
-                this.googleProvider.addScope('email');
-            }
-
-            async signInWithGoogle() {
-                try {
-                    const result = await auth.signInWithPopup(this.googleProvider);
-                    this.currentUser = result.user;
-                    this.isAuthenticated = true;
-                    console.log('Google sign-in successful:', {
-                        uid: result.user.uid,
-                        name: result.user.displayName,
-                        email: result.user.email,
-                        photo: result.user.photoURL
-                    });
-                    return result.user;
-                } catch (error) {
-                    console.error('Google sign-in failed:', error);
-                    throw error;
-                }
-            }
-
-            async signInAnonymously() {
-                try {
-                    const result = await auth.signInAnonymously();
-                    this.currentUser = result.user;
-                    this.isAuthenticated = true;
-                    console.log('Signed in anonymously:', result.user.uid);
-                    return result.user;
-                } catch (error) {
-                    console.error('Anonymous sign-in failed:', error);
-                    throw error;
-                }
-            }
-
-            async signOut() {
-                try {
-                    await auth.signOut();
-                    this.currentUser = null;
-                    this.isAuthenticated = false;
-                    console.log('User signed out');
-                } catch (error) {
-                    console.error('Sign out failed:', error);
-                    throw error;
-                }
-            }
-
-            getCurrentUser() {
-                return this.currentUser;
-            }
-
-            isUserAuthenticated() {
-                return this.isAuthenticated;
-            }
-
-            getUserDisplayName() {
-                return this.currentUser?.displayName || this.currentUser?.email || 'Anonymous Player';
-            }
-
-            getUserPhotoURL() {
-                return this.currentUser?.photoURL || null;
-            }
-
-            async waitForAuth() {
-                return new Promise((resolve) => {
-                    if (this.isAuthenticated) {
-                        resolve(this.currentUser);
-                        return;
-                    }
-
-                    const unsubscribe = auth.onAuthStateChanged((user) => {
-                        if (user) {
-                            this.currentUser = user;
-                            this.isAuthenticated = true;
-                            unsubscribe();
-                            resolve(user);
-                        }
-                    });
-                });
-            }
-        }
-
-        const authManager = new AuthManager();
-
-        // Authentication event listeners
-        function showUserInfo(user) {
-            const userInfo = document.getElementById('user-info');
-            const userPhoto = document.getElementById('user-photo');
-            const userName = document.getElementById('user-name');
-            
-            if (user.photoURL) {
-                userPhoto.src = user.photoURL;
-                userPhoto.style.display = 'block';
-            } else {
-                userPhoto.style.display = 'none';
-            }
-            
-            userName.textContent = authManager.getUserDisplayName();
-            userInfo.style.display = 'block';
-            
-            // Show mode selection immediately after successful login
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('mode-selection').style.display = 'flex';
-        }
-
-        // Initialize authentication on page load
-        window.addEventListener('load', () => {
-            // Check if user is already signed in
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    authManager.currentUser = user;
-                    authManager.isAuthenticated = true;
-                    console.log('User already signed in:', user.uid);
-                    showUserInfo(user);
-                } else {
-                    // Show login screen
-                    document.getElementById('login-screen').style.display = 'flex';
-                }
-            });
-        });
-
-        // Google Sign-In
-        document.getElementById('google-signin').addEventListener('click', async () => {
-            const btn = document.getElementById('google-signin');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Signing in...';
-            btn.disabled = true;
-
-            try {
-                const user = await authManager.signInWithGoogle();
-                showUserInfo(user);
-            } catch (error) {
-                console.error('Google sign-in error:', error);
-                if (error.code === 'auth/popup-closed-by-user') {
-                    alert('Sign-in cancelled. Please try again.');
-                } else {
-                    alert('Google sign-in failed: ' + error.message);
-                }
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        });
-
-        // Anonymous sign-in removed - Google sign-in only
-
-        // Sign Out
-        document.getElementById('sign-out').addEventListener('click', async () => {
-            try {
-                await authManager.signOut();
-                document.getElementById('login-screen').style.display = 'flex';
-                document.getElementById('mode-selection').style.display = 'none';
-                document.getElementById('user-info').style.display = 'none';
-                
-                // Reset any ongoing games
-                if (game && game.gameMode === 'online') {
-                    onlineManager.leaveRoom();
-                }
-            } catch (error) {
-                console.error('Sign out error:', error);
-                alert('Sign out failed: ' + error.message);
-            }
-        });
-
-        // Online Game Manager
-        class OnlineGameManager {
-            constructor() {
-                this.roomId = null;
-                this.playerId = null;
-                this.playerNumber = null;
-                this.isHost = false;
-                this.roomRef = null;
-                this.gameRef = null;
-                this.playersRef = null;
-                this.isOnlineGame = false;
-                this.opponentDisconnected = false;
-            }
-
-            generateRoomCode() {
-                return Math.random().toString(36).substring(2, 8).toUpperCase();
-            }
-
-            async createRoom() {
-                // Ensure user is authenticated
-                await authManager.waitForAuth();
-                const user = authManager.getCurrentUser();
-                if (!user) {
-                    throw new Error('Authentication required');
-                }
-
-                this.roomId = this.generateRoomCode();
-                this.playerId = user.uid;
-                this.playerNumber = 0;
-                this.isHost = true;
-                this.isOnlineGame = true;
-
-                this.roomRef = database.ref(`rooms/${this.roomId}`);
-                this.gameRef = database.ref(`rooms/${this.roomId}/game`);
-                this.playersRef = database.ref(`rooms/${this.roomId}/players`);
-
-                // Create room data
-                await this.roomRef.set({
-                    host: this.playerId,
-                    created: firebase.database.ServerValue.TIMESTAMP,
-                    status: 'waiting',
-                    players: {
-                        [this.playerId]: {
-                            playerNumber: 0,
-                            name: authManager.getUserDisplayName(),
-                            connected: true,
-                            lastSeen: firebase.database.ServerValue.TIMESTAMP
-                        }
-                    },
-                    game: {
-                        board: Array(24).fill(null),
-                        turn: 0,
-                        phase: 'placement',
-                        playerPiecesLeft: 11,
-                        computerPiecesLeft: 11,
-                        playerCaptured: 0,
-                        computerCaptured: 0,
-                        millsToRemove: 0,
-                        winner: null,
-                        restrictedMills: { 0: null, 1: null }
-                    }
-                });
-
-                this.setupListeners();
-                return this.roomId;
-            }
-
-            async joinRoom(roomCode) {
-                try {
-                    console.log('Step 1: Checking authentication...');
-                    // Ensure user is authenticated
-                    await authManager.waitForAuth();
-                    const user = authManager.getCurrentUser();
-                    if (!user) {
-                        throw new Error('Authentication required');
-                    }
-                    console.log('Step 1: User authenticated:', user.uid);
-
-                    this.roomId = roomCode.toUpperCase();
-                    this.playerId = user.uid;
-                    this.isOnlineGame = true;
-
-                    console.log('Step 2: Setting up database references for room:', this.roomId);
-                    this.roomRef = database.ref(`rooms/${this.roomId}`);
-                    this.gameRef = database.ref(`rooms/${this.roomId}/game`);
-                    this.playersRef = database.ref(`rooms/${this.roomId}/players`);
-
-                    console.log('Step 3: Checking if room exists...');
-                    // Check if room exists
-                    const roomSnapshot = await this.roomRef.once('value');
-                    if (!roomSnapshot.exists()) {
-                        console.error('Room not found:', this.roomId);
-                        throw new Error('Room not found');
-                    }
-                    console.log('Step 3: Room exists');
-
-                    const roomData = roomSnapshot.val();
-                    console.log('Step 4: Room data:', roomData);
-                    const playerCount = Object.keys(roomData.players || {}).length;
-                    console.log('Step 4: Current player count:', playerCount);
-
-                    if (playerCount >= 2) {
-                        throw new Error('Room is full');
-                    }
-
-                    // Check if user is already in the room
-                    if (roomData.players && roomData.players[this.playerId]) {
-                        console.log('Step 5: User already in room, rejoining...');
-                        this.playerNumber = roomData.players[this.playerId].playerNumber;
-                        this.isHost = roomData.host === this.playerId;
-                    } else {
-                        console.log('Step 5: Adding new player to room...');
-                        this.playerNumber = 1;
-                        this.isHost = false;
-
-                        // Add player to room
-                        await this.playersRef.child(this.playerId).set({
-                            playerNumber: 1,
-                            name: authManager.getUserDisplayName(),
-                            connected: true,
-                            lastSeen: firebase.database.ServerValue.TIMESTAMP
-                        });
-                        console.log('Step 5: Player added successfully');
-                    }
-
-                    console.log('Step 6: Updating room status...');
-                    // Update room status
-                    await this.roomRef.child('status').set('playing');
-                    console.log('Step 6: Room status updated');
-
-                    console.log('Step 7: Setting up listeners...');
-                    this.setupListeners();
-                    console.log('Step 7: Listeners set up successfully');
-                    
-                    return this.roomId;
-                } catch (error) {
-                    console.error('joinRoom failed at step:', error.message);
-                    throw error;
-                }
-            }
-
-            setupListeners() {
-                // Listen for game state changes
-                this.gameRef.on('value', (snapshot) => {
-                    if (snapshot.exists() && this.isOnlineGame) {
-                        const gameData = snapshot.val();
-                        this.updateLocalGameState(gameData);
-                    }
-                });
-
-                // Listen for player connections
-                this.playersRef.on('value', (snapshot) => {
-                    if (snapshot.exists()) {
-                        const players = snapshot.val();
-                        this.updatePlayerList(players);
-                    }
-                });
-
-                // Handle disconnection
-                this.playersRef.child(this.playerId).onDisconnect().update({
-                    connected: false,
-                    lastSeen: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                // Keep connection alive
-                setInterval(() => {
-                    if (this.isOnlineGame && this.playerId) {
-                        this.playersRef.child(this.playerId).update({
-                            lastSeen: firebase.database.ServerValue.TIMESTAMP
-                        });
-                    }
-                }, 30000);
-            }
-
-            updateLocalGameState(gameData) {
-                if (!game || !this.isOnlineGame) return;
-
-                // Update game state
-                game.board = gameData.board || Array(24).fill(null);
-                game.turn = gameData.turn || 0;
-                game.phase = gameData.phase || 'placement';
-                game.playerPiecesLeft = gameData.playerPiecesLeft || 11;
-                game.computerPiecesLeft = gameData.computerPiecesLeft || 11;
-                game.playerCaptured = gameData.playerCaptured || 0;
-                game.computerCaptured = gameData.computerCaptured || 0;
-                game.millsToRemove = gameData.millsToRemove || 0;
-                game.winner = gameData.winner || null;
-                game.restrictedMills = gameData.restrictedMills || { 0: null, 1: null };
-
-                // Update phase flags
-                game.playerCanMove = game.playerPiecesLeft === 0;
-                game.computerCanMove = game.computerPiecesLeft === 0;
-
-                render();
-            }
-
-            updatePlayerList(players) {
-                const playerList = document.getElementById('player-list');
-                const waitingMessage = document.getElementById('waiting-message');
-                
-                if (playerList) {
-                    const playerCount = Object.keys(players).length;
-                    let html = '';
-                    
-                    Object.values(players).forEach(player => {
-                        const status = player.connected ? '🟢' : '🔴';
-                        html += `<div>${status} ${player.name}</div>`;
-                    });
-                    
-                    playerList.innerHTML = html;
-                    
-                    if (playerCount === 2) {
-                        waitingMessage.textContent = 'Game Ready! Starting...';
-                        setTimeout(() => {
-                            this.startOnlineGame();
-                        }, 2000);
-                    }
-                }
-            }
-
-            async updateGameState(gameState) {
-                if (!this.isOnlineGame || !this.gameRef) return;
-                
-                try {
-                    await this.gameRef.update(gameState);
-                } catch (error) {
-                    console.error('Error updating game state:', error);
-                }
-            }
-
-            startOnlineGame() {
-                document.getElementById('online-selection').style.display = 'none';
-                document.getElementById('change-mode').style.display = 'block';
-                
-                // Update UI for online game
-                if (this.playerNumber === 0) {
-                    document.getElementById('player2-title').textContent = 'Player 2 (Yellow) - Online';
-                } else {
-                    document.getElementById('player2-title').textContent = 'Player 1 (Green) - Online';
-                }
-                
-                game.gameMode = 'online';
-                game.onlineManager = this;
-                render();
-                animate();
-            }
-
-            leaveRoom() {
-                if (this.roomRef && this.playerId) {
-                    this.playersRef.child(this.playerId).remove();
-                    this.roomRef.off();
-                    this.gameRef.off();
-                    this.playersRef.off();
-                }
-                
-                this.roomId = null;
-                this.playerId = null;
-                this.playerNumber = null;
-                this.isHost = false;
-                this.isOnlineGame = false;
-                this.roomRef = null;
-                this.gameRef = null;
-                this.playersRef = null;
-            }
-        }
-
-        const onlineManager = new OnlineGameManager();
-
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
         const positions = [
@@ -1044,32 +518,6 @@
                 this.timer = null;
                 this.timeLeft = 20;
                 this.possibleMoves = [];
-                this.onlineManager = null;
-            }
-
-            async syncGameState() {
-                if (this.gameMode === 'online' && this.onlineManager) {
-                    const gameState = {
-                        board: this.board,
-                        turn: this.turn,
-                        phase: this.phase,
-                        playerPiecesLeft: this.playerPiecesLeft,
-                        computerPiecesLeft: this.computerPiecesLeft,
-                        playerCaptured: this.playerCaptured,
-                        computerCaptured: this.computerCaptured,
-                        millsToRemove: this.millsToRemove,
-                        winner: this.winner,
-                        restrictedMills: this.restrictedMills
-                    };
-                    await this.onlineManager.updateGameState(gameState);
-                }
-            }
-
-            isMyTurn() {
-                if (this.gameMode !== 'online' || !this.onlineManager) {
-                    return this.turn === 0; // Local game, always player 1's perspective
-                }
-                return this.turn === this.onlineManager.playerNumber;
             }
 
             getPieces(player) {
@@ -1095,7 +543,7 @@
                 return mills.filter(m => m.every(pos => this.board[pos] === player));
             }
 
-            async placePiece(pos, player) {
+            placePiece(pos, player) {
                 if (this.board[pos] !== null) return false;
                 const oldMills = this.getAllMills(player);
                 this.board[pos] = player;
@@ -1128,15 +576,10 @@
                     document.getElementById('phase-indicator').textContent = 'Movement';
                 }
                 
-                // Sync with Firebase for online games
-                if (this.gameMode === 'online') {
-                    await this.syncGameState();
-                }
-                
                 return true;
             }
 
-            async movePiece(fromPos, toPos, player) {
+            movePiece(fromPos, toPos, player) {
                 if (this.board[fromPos] !== player || this.board[toPos] !== null || !adj[fromPos].includes(toPos)) return false;
                 
                 // Check if this move would violate the mill restriction
@@ -1179,11 +622,6 @@
                 // Track the last move
                 this.lastMoveFromPos[player] = fromPos;
                 
-                // Sync with Firebase for online games
-                if (this.gameMode === 'online') {
-                    await this.syncGameState();
-                }
-                
                 return true;
             }
 
@@ -1202,7 +640,7 @@
                 return true;
             }
 
-            async removePiece(pos, player) {
+            removePiece(pos, player) {
                 const opponent = 1 - player;
                 if (this.board[pos] !== opponent) return false;
                 
@@ -1224,12 +662,6 @@
                     }
                     
                     this.checkWin();
-                    
-                    // Sync with Firebase for online games
-                    if (this.gameMode === 'online') {
-                        await this.syncGameState();
-                    }
-                    
                     return true;
                 }
                 
@@ -1834,9 +1266,7 @@
             animationFrame = requestAnimationFrame(animate);
         }
 
-        async function handleInteraction(e) {
-            // Check if it's player's turn for online games
-            if (game.gameMode === 'online' && !game.isMyTurn()) return;
+        function handleInteraction(e) {
             if (game.turn !== 0 && game.gameMode === 'computer') return;
             if (game.winner !== null) return;
             
@@ -1850,15 +1280,12 @@
             if (clicked === null) return;
 
             if (game.millsToRemove > 0) {
-                if (await game.removePiece(clicked, game.turn)) {
+                if (game.removePiece(clicked, game.turn)) {
                     game.millsToRemove -= 1;
                     if (game.millsToRemove === 0) {
                         if (game.gameMode === 'computer') {
                             game.turn = 1;
                             game.playComputerTurn();
-                        } else if (game.gameMode === 'online') {
-                            game.turn = 1 - game.turn;
-                            await game.syncGameState();
                         } else {
                             game.turn = 1 - game.turn;
                         }
@@ -1871,14 +1298,11 @@
                 if ((game.turn === 0 && !game.playerCanMove) || (game.turn === 1 && !game.computerCanMove)) {
                     // Placement phase
                     if ((game.turn === 0 && game.playerPiecesLeft > 0) || (game.turn === 1 && game.computerPiecesLeft > 0)) {
-                        if (await game.placePiece(clicked, game.turn)) {
+                        if (game.placePiece(clicked, game.turn)) {
                             if (game.millsToRemove === 0) {
                                 if (game.gameMode === 'computer') {
                                     game.turn = 1;
                                     game.playComputerTurn();
-                                } else if (game.gameMode === 'online') {
-                                    game.turn = 1 - game.turn;
-                                    await game.syncGameState();
                                 } else {
                                     game.turn = 1 - game.turn;
                                 }
@@ -1929,15 +1353,12 @@
                             }
                         }
                         
-                        if (await game.movePiece(game.selected, clicked, game.turn)) {
+                        if (game.movePiece(game.selected, clicked, game.turn)) {
                             game.selected = null;
                             if (game.millsToRemove === 0) {
                                 if (game.gameMode === 'computer') {
                                     game.turn = 1;
                                     game.playComputerTurn();
-                                } else if (game.gameMode === 'online') {
-                                    game.turn = 1 - game.turn;
-                                    await game.syncGameState();
                                 } else {
                                     game.turn = 1 - game.turn;
                                 }
@@ -1980,74 +1401,6 @@
             startGame('player2');
         });
 
-        document.getElementById('play-online').addEventListener('click', () => {
-            document.getElementById('mode-selection').style.display = 'none';
-            document.getElementById('online-selection').style.display = 'flex';
-        });
-
-        document.getElementById('back-to-modes').addEventListener('click', () => {
-            document.getElementById('online-selection').style.display = 'none';
-            document.getElementById('mode-selection').style.display = 'flex';
-            onlineManager.leaveRoom();
-        });
-
-        document.getElementById('create-room').addEventListener('click', async () => {
-            try {
-                const roomCode = await onlineManager.createRoom();
-                document.getElementById('room-code').textContent = `Room Code: ${roomCode}`;
-                document.getElementById('room-info').style.display = 'block';
-                document.querySelector('.mode-buttons').style.display = 'none';
-            } catch (error) {
-                alert('Error creating room: ' + error.message);
-            }
-        });
-
-        document.getElementById('join-room').addEventListener('click', () => {
-            document.getElementById('join-room-input').style.display = 'block';
-            document.querySelector('.mode-buttons').style.display = 'none';
-        });
-
-        document.getElementById('cancel-join').addEventListener('click', () => {
-            document.getElementById('join-room-input').style.display = 'none';
-            document.querySelector('.mode-buttons').style.display = 'block';
-        });
-
-        document.getElementById('join-room-btn').addEventListener('click', async () => {
-            const roomCode = document.getElementById('room-code-input').value.trim();
-            if (!roomCode) {
-                alert('Please enter a room code');
-                return;
-            }
-
-            // Show loading state
-            const joinBtn = document.getElementById('join-room-btn');
-            const originalText = joinBtn.textContent;
-            joinBtn.textContent = 'Joining...';
-            joinBtn.disabled = true;
-
-            try {
-                console.log('Attempting to join room:', roomCode);
-                await onlineManager.joinRoom(roomCode);
-                console.log('Successfully joined room');
-                document.getElementById('room-code').textContent = `Room Code: ${roomCode}`;
-                document.getElementById('room-info').style.display = 'block';
-                document.getElementById('join-room-input').style.display = 'none';
-            } catch (error) {
-                console.error('Join room error:', error);
-                alert('Error joining room: ' + error.message);
-                // Reset button state
-                joinBtn.textContent = originalText;
-                joinBtn.disabled = false;
-            }
-        });
-
-        // Allow Enter key to join room
-        document.getElementById('room-code-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('join-room-btn').click();
-            }
-        });
-
         document.getElementById('new-game').addEventListener('click', () => {
             cancelAnimationFrame(animationFrame);
             game.reset();
@@ -2066,11 +1419,6 @@
             cancelAnimationFrame(animationFrame);
             document.getElementById('mode-selection').style.display = 'flex';
             document.getElementById('change-mode').style.display = 'none';
-            
-            // Leave online room if in online game
-            if (game.gameMode === 'online') {
-                onlineManager.leaveRoom();
-            }
         });
 
         const rulesModal = document.getElementById('rules-modal');
@@ -2091,7 +1439,7 @@
             modalOverlay.style.display = 'none';
         });
 
-        // Game initialization is now handled by authentication flow
-        // Mode selection will be shown after successful login
+        // Initialize the game with mode selection
+        document.getElementById('mode-selection').style.display = 'flex';
     </script>
 </html>
